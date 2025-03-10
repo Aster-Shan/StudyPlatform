@@ -2,8 +2,8 @@ package com.studyplatform.studyplatform.dto;
 import lombok.Data;
 
 @Data
-public class LoginRequest {
+public class Verify2FARequest {
     private String email;
-    private String password;
+    private String code;
+    private String tempToken;
 }
-

@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "jsx": "react",
+    "forceConsistentCasingInFileNames": true,  // Enforces consistent casing in file names
+    "strict": true,  // Enables strict type-checking options
+    "target": "ES2022",  // Target ECMAScript version
+    "lib": ["ES2022"],  // Use ES2022 libraries
+    "lib": ["dom", "esnext"],
+    "module": "ESNext",  // Use the latest module system
+    "skipLibCheck": true,  // Skip type checking of declaration files
+    "moduleResolution": "bundler",  // Resolve modules using bundler mode
+    "allowImportingTsExtensions": true,  // Allow importing .ts extensions
+    "isolatedModules": true,  // Enable isolated modules for faster compilation
+    "moduleDetection": "force",  // Force module detection
+    "noEmit": true,  // Don't emit output files
+    "noUnusedLocals": true,  // Report unused locals
+    "noUnusedParameters": true,  // Report unused parameters
+    "noFallthroughCasesInSwitch": true,  // Prevent fallthrough cases in switch statements
+    "noUncheckedSideEffectImports": true  // Prevent imports that cause side effects
+  },
+  "include": ["src"]  // Include the source directory
+}

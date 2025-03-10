@@ -1,133 +1,154 @@
 package com.studyplatform.studyplatform.Service;
 
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import javax.management.RuntimeErrorException;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.studyplatform.studyplatform.Config.security.TokenProvider;
+import com.studyplatform.studyplatform.Model.PasswordResetToken;
 import com.studyplatform.studyplatform.Model.User;
-import com.studyplatform.studyplatform.dto.LoginResponse;
-import com.studyplatform.studyplatform.exception.EmailServiceException;
-import com.studyplatform.studyplatform.exception.ResourceNotFoundException;
-import com.studyplatform.studyplatform.exception.ValidationException;
+import com.studyplatform.studyplatform.Model.VerificationToken;
+import com.studyplatform.studyplatform.Repository.PasswordResetTokenRepository;
+import com.studyplatform.studyplatform.Repository.UserRepository;
+import com.studyplatform.studyplatform.Repository.VerificationTokenRepository;
+import com.studyplatform.studyplatform.dto.ProfileUpdateRequest;
+import com.studyplatform.studyplatform.dto.RegisterRequest;
+
+import dev.samstevens.totp.code.CodeVerifier;
 
 @Service
+
 public class UserService {
-	private static final Logger logger = LoggerFactory.getLogger(UserService.class);
+    @Autowired
+    private UserRepository userRepository;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private EmailService emailService;
 
-	@Autowired
-	private com.studyplatform.studyplatform.Repository.UserRepository userRepository;
+    @Autowired
+    private PasswordResetTokenRepository passwordResetTokenRepository;
 
-	@Autowired
-	private PasswordEncoder passwordEncoder;
+    @Autowired
+    private CodeVerifier codeVerifier;
 
-	@Autowired
-	private EmailService emailService;
+    @Autowired
+    private VerificationTokenRepository verificationTokenRepository;
 
-	@Autowired
-	private TokenProvider tokenProvider;
+    private Map<String, String> temporary2FASecrets = new HashMap<>();
 
-	public User registerUser(User user) {
-		if (user.getEmail() == null || user.getEmail().isEmpty()) {
-			throw new ValidationException("Email is required");
-		}
-		if (userRepository.findByEmail(user.getEmail()).isPresent()) {
-			throw new ValidationException("Email already exists");
-		}
-		if (user.getPassword() == null || user.getPassword().isEmpty()) {
-			throw new ValidationException("Password is required");
-		}
-		user.setPassword(passwordEncoder.encode(user.getPassword()));
-		user.setVerificationToken(UUID.randomUUID().toString());
-		user.setRole("USER");
-		user.setVerified(false);
-		User savedUser = userRepository.save(user);
-		try {
-			logger.info("Attempting to send verification email to: {}", savedUser.getEmail());
-			emailService.sendVerificationEmail(savedUser);
-			logger.info("Verification email sent successfully to: {}", savedUser.getEmail());
-		} catch (EmailServiceException e) {
-			logger.error("Failed to send verification email to: {}", savedUser.getEmail(), e);
-		}
-		return savedUser;
-	}
+    public User registerUser(RegisterRequest request) {
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new RuntimeException("Email is already taken");
+        }
+    
+        User user = new User();
+        user.setEmail(request.getEmail());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setFirstName(request.getFirstName());
+        user.setLastName(request.getLastName());
+        user.setProvide(User.AuthProvider.LOCAL);
+        user.setEnabled(false); // User starts as disabled
+        
+        User savedUser = userRepository.save(user);
+        String token = UUID.randomUUID().toString();
+        createVerificationToken(savedUser, token);
+        String confirmationUrl = "http://localhost:3000/confirm?token=" + token;
+        emailService.sendVerificationEmail(savedUser.getEmail(), confirmationUrl);
+        
+        return savedUser;
+    }
+    
+    private void createVerificationToken(User user, String token) {
+        VerificationToken verificationToken = new VerificationToken();
+        verificationToken.setUser(user);
+        verificationToken.setToken(token);
+        verificationToken.setExpiryDate(LocalDateTime.now().plusHours(24));
+        verificationTokenRepository.save(verificationToken);
+    }
+    public User getUserByEmail(String email){
+        return userRepository.findByEmail(email).orElseThrow(()-> new UsernameNotFoundException("User not found with email"+email));
+    }
+    public void InitiatePasswordReset(String Email){
+        User user =getUserByEmail(Email);
+        String token= UUID.randomUUID().toString();
+        LocalDateTime expiryDate =LocalDateTime.now().plusHours(24);
 
-	public LoginResponse login(String email, String password) {
-		User user = userRepository.findByEmail(email).orElseThrow(() -> new ValidationException("Invalid credentials"));
+        PasswordResetToken resetToken = new PasswordResetToken();
+        resetToken.setToken(token);
+        resetToken.setUser(user);
+        resetToken.setExpiryDate(expiryDate);
+        passwordResetTokenRepository.save(resetToken);
 
-		if (!passwordEncoder.matches(password, user.getPassword())) {
-			throw new ValidationException("Invalid credentials");
-		}
+        String resetLink="http://localhost:3000/reset-password?token=" + token;
+            emailService.sendPasswordResetEmail(user.getEmail(), resetLink);
 
-		if (!user.isVerified()) {
-			throw new ValidationException("User inactive, please verify via e-mail.");
-		}
+    }
+    public void resetPassword(String token,String newPassword) throws RuntimeErrorException{
+        PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(token)
+        .orElseThrow(()-> new RuntimeErrorException(null, "Token is Invalid"));
 
-		String token = tokenProvider.createToken(user.getEmail(), user.getRole());
+        if (resetToken.getExpiryDate().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("Token has expired");
+        }
 
-		return new LoginResponse(token, user, "Login successful");
-	}
+        User user = resetToken.getUser();
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+        passwordResetTokenRepository.delete(resetToken);
 
-	public User getUserByEmail(String email) {
-		return userRepository.findByEmail(email)
-				.orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
-	}
+    }
+    public User updateProfile(String email, ProfileUpdateRequest request){
+        User user = getUserByEmail(email);
+        user.setFirstName(request.getFirstName());
+        user.setLastName(request.getLastName());
+        user.setBio(request.getBio());
+        user.setAcademicInterests(request.getAcademicInterests());
 
-	public User verifyUser(String token) {
-		User user = userRepository.findByVerificationToken(token)
-				.orElseThrow(() -> new ResourceNotFoundException("Invalid verification token"));
-		user.setVerified(true);
-		user.setVerificationToken(null);
-		logger.info("Verification OK");
-		return userRepository.save(user);
-	}
+        return userRepository.save(user);
 
-	public void forgetpassword(String email) {
-		User user = userRepository.findByEmail(email)
-				.orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
+    }
+    public User updateProfilePicture(String email, String pictureUrl){
+        User user = getUserByEmail(email);
+        user.setProfilePictureUrl(pictureUrl);
+        return userRepository.save(user);
+        }
+    public void saveTemporary2FASecret(String email, String secret) {
+        temporary2FASecrets.put(email, secret);
+        }
+    
+    public boolean verfiy2FACode(String email, String code){
+         String secret;
+            if (temporary2FASecrets.containsKey(email)){
+                secret =temporary2FASecrets.get(email);
+            }else{
+                User user =getUserByEmail(email);
+                secret =user.getSecret2FA();
+            }
+        return codeVerifier.isValidCode(secret, code);
+        }
+    public void enable2FA(String email) {
+        User user = getUserByEmail(email);
+        String secret = temporary2FASecrets.get(email);
+        user.setSecret2FA(secret);
+        user.setUsing2FA(true);
+        userRepository.save(user);
+        temporary2FASecrets.remove(email);
+        }
 
-		String resetToken = UUID.randomUUID().toString();
-		userRepository.save(user);
-		emailService.sendPasswordResetEmail(user, resetToken);
-	}
-
-	public void resetPassword(String token, String newPassword) {
-		User user = userRepository.findByResetToken(token)
-				.orElseThrow(() -> new ResourceNotFoundException("Invalid reset token"));
-		user.setPassword(passwordEncoder.encode(newPassword));
-		user.setResetToken(null); // Clear reset token
-		userRepository.save(user);
-	}
-
-	public User updateUser(User user) {
-		User existingUser = userRepository.findById(user.getId())
-				.orElseThrow(() -> new ResourceNotFoundException("User not found"));
-		existingUser.setName(user.getName());
-		existingUser.setAddress(user.getAddress());
-		existingUser.setPhone(user.getPhone());
-		return userRepository.save(existingUser);
-	}
-
-	public User changePassword(User user, String oldPassword, String newPassword) {
-		User existingUser = userRepository.findById(user.getId())
-				.orElseThrow(() -> new ResourceNotFoundException("User not found"));
-		if (!passwordEncoder.matches(oldPassword, existingUser.getPassword())) {
-			throw new ValidationException("Old password is incorrect");
-		}
-		if (oldPassword.equals(newPassword)) {
-			throw new ValidationException("New password cannot be the same as the old password");
-		}
-		existingUser.setPassword(passwordEncoder.encode(newPassword));
-		return userRepository.save(existingUser);
-	}
-
-	public User getUser(Long id) {
-		return userRepository.getById(id);
-	}
+    public void disable2FA(String email) {
+        User user = getUserByEmail(email);
+        user.setSecret2FA(null);
+        user.setUsing2FA(false);
+        userRepository.save(user);
+        }
 }
