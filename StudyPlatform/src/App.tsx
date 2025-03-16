@@ -1,3 +1,4 @@
+import 'bootstrap/dist/css/bootstrap.min.css'
 import React from "react"
 import { Route, BrowserRouter as Router, Routes } from "react-router-dom"
 import Navbar from "./components/Navbar"
@@ -13,6 +14,7 @@ import ResetPassword from "./pages/ResetPassword"
 import Setup2FA from "./pages/Setup2FA"
 
 
+
 function App() {
   return (
     <AuthProvider>
@@ -22,6 +24,7 @@ function App() {
           <main className="container mx-auto py-8 px-4">
             <Routes>
               <Route path="/login" element={<Login />} />
+              
               <Route path="/register" element={<Register />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
@@ -42,7 +45,7 @@ function App() {
                 }
               />
               <Route
-                path="/setup-2fa"
+                path="/Setup2FA"
                 element={
                   <ProtectedRoute>
                     <Setup2FA />

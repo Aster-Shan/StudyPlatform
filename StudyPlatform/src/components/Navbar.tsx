@@ -1,179 +1,147 @@
-"use client"
-
-import { ChevronDown, LogOut, Menu, Settings, User, X } from "lucide-react"
-import React, { useState } from "react"
+import { ChevronDown, LogOut, Settings, User } from 'lucide-react'
+import React, { useEffect, useRef, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { useAuth } from "../contexts/AuthContext"
 
 export default function Navbar() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
+  
+  // Explicitly typing the dropdownRef
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
   const handleLogout = () => {
     logout()
     navigate("/login")
   }
 
-  return (
-    <header className="border-b bg-white dark:bg-gray-800 dark:border-gray-700">
-      <div className="container flex h-16 items-center justify-between py-4 px-4 md:px-6">
-        <div className="flex items-center gap-4">
-          <Link to="/" className="text-xl font-bold">
-            UserManagement
-          </Link>
-        </div>
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      // TypeScript error fix: Checking if dropdownRef.current is not null
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsProfileMenuOpen(false)
+      }
+    }
 
-        <nav className="hidden md:flex items-center gap-6">
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [])
+
+  return (
+    <header className="navbar navbar-light bg-white border-bottom">
+      <div className="container ms-2">
+        {/* Brand */}
+        <Link to="/" className="navbar-brand fw-bold">
+          UserManagement
+        </Link>
+
+        {/* Nav links */}
+        <ul className="navbar-nav me-auto d-flex flex-row">
           {user ? (
             <>
-              <Link to="/" className="text-sm font-medium transition-colors hover:text-blue-600">
-                Home
-              </Link>
-              <Link to="/documents" className="text-sm font-medium transition-colors hover:text-blue-600">
-                Documents
-              </Link>
+              <li className="nav-item me-3">
+                <Link to="/" className="nav-link">
+                  Home
+                </Link>
+              </li>
+              <li className="nav-item">
+                <Link to="/documents" className="nav-link">
+                  Documents
+                </Link>
+              </li>
             </>
           ) : (
-            <>
-              <Link to="/login" className="text-sm font-medium transition-colors hover:text-blue-600">
-                Login
-              </Link>
-              <Link to="/register" className="text-sm font-medium transition-colors hover:text-blue-600">
-                Register
-              </Link>
-            </>
+            <></>
           )}
-        </nav>
+        </ul>
 
+        {/* Auth buttons or user dropdown */}
         {user ? (
-          <div className="relative">
+          <div className="dropdown" ref={dropdownRef} >
             <button
-              className="flex items-center gap-2 focus:outline-none"
+              className="btn btn-link dropdown-toggle p-0 d-flex align-items-center text-decoration-none"
+              type="button"
               onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+              aria-expanded={isProfileMenuOpen} 
+              aria-haspopup="true"
+              id="userDropdown"
             >
-              <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+              <div className="d-flex align-items-center justify-content-center bg-light rounded-circle me-2" style={{ width: "32px", height: "32px" }}>
                 {user.profilePictureUrl ? (
                   <img
                     src={user.profilePictureUrl || "/placeholder.svg"}
                     alt={user.firstName}
-                    className="h-full w-full object-cover"
+                    className="rounded-circle w-100 h-100 object-fit-cover"
                   />
                 ) : (
-                  <span className="font-medium text-gray-700">
+                  <span className="fw-medium text-secondary">
                     {user.firstName?.charAt(0)}
                     {user.lastName?.charAt(0)}
                   </span>
                 )}
               </div>
-              <ChevronDown className="h-4 w-4" />
+              <ChevronDown size={16} />
             </button>
 
-            {isProfileMenuOpen && (
-              <div className="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
-                <div className="py-1">
-                  <div className="px-4 py-2 border-b border-gray-100">
-                    <p className="text-sm font-medium">
-                      {user.firstName} {user.lastName}
-                    </p>
-                    <p className="text-xs text-gray-500">{user.email}</p>
-                  </div>
-                  <Link
-                    to="/"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    onClick={() => setIsProfileMenuOpen(false)}
-                  >
-                    <div className="flex items-center">
-                      <User className="mr-2 h-4 w-4" />
-                      Dashboard
-                    </div>
-                  </Link>
-                  <Link
-                    to="/profile"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    onClick={() => setIsProfileMenuOpen(false)}
-                  >
-                    <div className="flex items-center">
-                      <Settings className="mr-2 h-4 w-4" />
-                      Profile Settings
-                    </div>
-                  </Link>
-                  <button
-                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    onClick={() => {
-                      setIsProfileMenuOpen(false)
-                      handleLogout()
-                    }}
-                  >
-                    <div className="flex items-center">
-                      <LogOut className="mr-2 h-4 w-4" />
-                      Log out
-                    </div>
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="hidden md:flex items-center gap-4">
-            <Link to="/login">
-              <button className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
-                Log in
-              </button>
-            </Link>
-            <Link to="/register">
-              <button className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700">
-                Sign up
-              </button>
-            </Link>
-          </div>
-        )}
-
-        <button className="md:hidden focus:outline-none" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-          {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </button>
-      </div>
-
-      {/* Mobile menu */}
-      {isMenuOpen && (
-        <div className="md:hidden py-4 px-4 border-t border-gray-100">
-          <nav className="flex flex-col space-y-4">
-            {user ? (
-              <>
-                <Link to="/" className="text-sm font-medium" onClick={() => setIsMenuOpen(false)}>
-                  Home
+            <ul 
+              className={`dropdown-menu dropdown-menu-end ${isProfileMenuOpen ? 'show' : ''}`} 
+              style={{ minWidth: "220px" }}
+              aria-labelledby="userDropdown"
+            >
+              <li className="px-3 py-2 border-bottom">
+                <p className="mb-0 fw-medium small">{user.firstName} {user.lastName}</p>
+                <p className="mb-0 text-muted small">{user.email}</p>
+              </li>
+              <li>
+                <Link 
+                  to="/" 
+                  className="dropdown-item d-flex align-items-center py-2"
+                  onClick={() => setIsProfileMenuOpen(false)}
+                >
+                  <User size={16} className="me-2" />
+                  Dashboard
                 </Link>
-                <Link to="/documents" className="text-sm font-medium" onClick={() => setIsMenuOpen(false)}>
-                  Documents
+              </li>
+              <li>
+                <Link 
+                  to="/profile" 
+                  className="dropdown-item d-flex align-items-center py-2"
+                  onClick={() => setIsProfileMenuOpen(false)}
+                >
+                  <Settings size={16} className="me-2" />
+                  Profile Settings
                 </Link>
-                <Link to="/profile" className="text-sm font-medium" onClick={() => setIsMenuOpen(false)}>
-                  Profile
-                </Link>
+              </li>
+              <li><hr className="dropdown-divider" /></li>
+              <li>
                 <button
-                  className="text-sm font-medium text-left text-red-600"
+                  className="dropdown-item d-flex align-items-center py-2 text-danger"
                   onClick={() => {
-                    setIsMenuOpen(false)
+                    setIsProfileMenuOpen(false)
                     handleLogout()
                   }}
                 >
+                  <LogOut size={16} className="me-2" />
                   Log out
                 </button>
-              </>
-            ) : (
-              <>
-                <Link to="/login" className="text-sm font-medium" onClick={() => setIsMenuOpen(false)}>
-                  Login
-                </Link>
-                <Link to="/register" className="text-sm font-medium" onClick={() => setIsMenuOpen(false)}>
-                  Register
-                </Link>
-              </>
-            )}
-          </nav>
-        </div>
-      )}
+              </li>
+            </ul>
+          </div>
+        ) : (
+          <div className="d-flex">
+            <Link to="/login" className="btn btn-outline-secondary me-2">
+              Log in
+            </Link>
+            <Link to="/register" className="btn btn-primary">
+              Sign up
+            </Link>
+          </div>
+        )}
+      </div>
     </header>
   )
 }
-

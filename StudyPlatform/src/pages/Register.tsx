@@ -1,4 +1,4 @@
-
+"use client"
 
 import React from "react"
 
@@ -25,12 +25,22 @@ export default function Register() {
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
+  const validatePassword = (password: string) => {
+    // Minimum 8 characters, at least one letter and one number
+    const regex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/
+    return regex.test(password)
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
 
     if (formData.password !== formData.confirmPassword) {
       return setError("Passwords do not match")
+    }
+
+    if (!validatePassword(formData.password)) {
+      return setError("Password must be at least 8 characters and include at least one letter and one number")
     }
 
     setLoading(true)
@@ -44,19 +54,19 @@ export default function Register() {
       })
       navigate("/")
     } catch (err: unknown) {
-
+      console.error("Registration error:", err)
       if (err instanceof Error) {
-        setError(err.message || 'Failed to upload document');
+        setError(err.message)
       } else {
-        setError('Failed to upload document');
+        setError("Registration failed. Please try again.")
       }
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
   }
 
   const handleGoogleLogin = () => {
-    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/oauth2/authorization/google`
+    window.location.href = `${import.meta.env.VITE_API_URL}/oauth2/authorization/google`
   }
 
   return (
