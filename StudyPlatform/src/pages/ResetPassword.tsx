@@ -1,11 +1,7 @@
-
-
-import React from "react"
-
-import { AlertCircle } from "lucide-react"
-import { useEffect, useState } from "react"
+import axios from "axios"
+import { AlertCircle, Shield } from 'lucide-react'
+import React, { useEffect, useState } from "react"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
-import api from "../services/api"
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams()
@@ -24,109 +20,150 @@ export default function ResetPassword() {
     }
   }, [token])
 
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
-
+  
     if (password !== confirmPassword) {
       return setError("Passwords do not match")
     }
-
+  
     setLoading(true)
-
+  
+    // Add this to see what's being sent
+    console.log("Sending data:", {
+      token: token,
+      newPassword: password
+    });
+  
     try {
-      await api.post("/api/users/reset-password", null, {
-        params: { token, newPassword: password },
-      })
-      setSuccess(true)
+      const response = await axios.post(
+        `http://localhost:8080/api/users/reset-password?token=${token}&newPassword=${password}`,
+        {},  // Empty body
+        {
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+      console.log("Response:", response);
+      setSuccess(true);
       setTimeout(() => {
-        navigate("/login")
-      }, 3000)
-    } catch (err: unknown) {
-
-      if (err instanceof Error) {
-        setError(err.message || 'Failed to upload document');
+        navigate("/login");
+      }, 3000);
+    } catch (error: unknown) {
+      console.error("Error:", error);
+      
+      if (axios.isAxiosError(error) && error.response) {
+        // This is an Axios error with a response
+        console.log("Error response:", error.response.data);
+        setError(error.response.data?.message || 'Failed to reset password');
       } else {
-        setError('Failed to upload document');
+        // This is some other type of error
+        setError('Failed to reset password');
       }
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
   }
 
   return (
-    <div className="flex justify-center items-center min-h-[80vh]">
-      <div className="w-full max-w-md bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="p-6 border-b border-gray-200">
-          <h2 className="text-2xl font-semibold text-center">Reset Password</h2>
-          <p className="text-center text-gray-500 mt-1">Create a new password for your account</p>
-        </div>
-
-        <div className="p-6">
-          {error && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md text-red-800 flex items-start">
-              <AlertCircle className="h-4 w-4 mr-2 mt-0.5" />
-              <p>{error}</p>
-            </div>
-          )}
-
-          {success ? (
-            <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-md text-green-800">
-              <p>Your password has been reset successfully. You will be redirected to the login page.</p>
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                  New Password
-                </label>
-                <input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-                  Confirm New Password
-                </label>
-                <input
-                  id="confirmPassword"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-
-              <button
-                type="submit"
-                className={`w-full py-2 px-4 rounded-md text-white font-medium ${
-                  loading || !token ? "bg-blue-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
-                }`}
-                disabled={loading || !token}
+    <div className="vh-100 vw-100 d-flex align-items-center justify-content-center bg-light">
+      <div className="container" style={{ maxWidth: "1500px" }}>
+        <div className="row justify-content-center">
+          <div className="col-md-10 col-lg-8 col-xl-7">
+            <div className="card border-0 shadow-lg" style={{ borderRadius: "15px" }}>
+              <div
+                className="card-header border-0 text-white py-5"
+                style={{
+                  background: "linear-gradient(135deg, #000000 0%, #2c3e50 100%)",
+                  borderBottom: "1px solid rgba(255,255,255,0.1)",
+                  borderTopLeftRadius: "15px",
+                  borderTopRightRadius: "15px",
+                }}
               >
-                {loading ? "Resetting..." : "Reset Password"}
-              </button>
-            </form>
-          )}
-        </div>
+                <div className="d-flex align-items-center justify-content-between">
+                  <div>
+                    <h3 className="mb-1 fw-bold" style={{ fontSize: "1.8rem" }}>
+                      Reset Password
+                    </h3>
+                    <p className="mb-0 opacity-75" style={{ fontSize: "1rem" }}>
+                      Enter your new password below
+                    </p>
+                  </div>
+                  <div className="rounded-circle bg-white bg-opacity-10 p-3">
+                    <Shield size={28} className="text-white" />
+                  </div>
+                </div>
+              </div>
 
-        <div className="p-6 border-t border-gray-200 text-center">
-          <p className="text-sm text-gray-600">
-            Remember your password?{" "}
-            <Link to="/login" className="text-blue-600 hover:underline">
-              Back to login
-            </Link>
-          </p>
+              <div className="card-body p-5">
+                {error && (
+                  <div className="alert alert-danger d-flex align-items-center">
+                    <AlertCircle size={20} className="me-2" />
+                    <div>{error}</div>
+                  </div>
+                )}
+
+                {success ? (
+                  <div className="alert alert-success">
+                    <p>Your password has been reset successfully. You will be redirected to the login page.</p>
+                  </div>
+                ) : (
+                  <form className="mb-4" onSubmit={handleSubmit}>
+                    <div className="mb-4">
+                      <label htmlFor="password" className="form-label" style={{ fontSize: "1.2rem" }}>
+                        New Password
+                      </label>
+                      <input
+                        type="password"
+                        className="form-control"
+                        id="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        style={{ fontSize: "1rem" }}
+                      />
+                    </div>
+
+                    <div className="mb-4">
+                      <label htmlFor="confirmPassword" className="form-label" style={{ fontSize: "1.2rem" }}>
+                        Confirm New Password
+                      </label>
+                      <input
+                        type="password"
+                        className="form-control"
+                        id="confirmPassword"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        required
+                        style={{ fontSize: "1rem" }}
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="btn btn-primary w-100 py-3 mb-4"
+                      disabled={loading || !token}
+                      style={{ fontSize: "1.2rem" }}
+                    >
+                      {loading ? "Resetting..." : "Reset Password"}
+                    </button>
+                  </form>
+                )}
+
+                <div className="d-flex justify-content-between align-items-center mt-4">
+                  <p className="text-center text-gray-500">
+                    Remember your password?{" "}
+                    <Link to="/login" className="text-primary">
+                      Back to login
+                    </Link>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   )
 }
-

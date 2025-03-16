@@ -41,7 +41,12 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
         .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
         .and()
         .authorizeHttpRequests()
-            .antMatchers("/api/auth/**", "/oauth2/**").permitAll()
+            .antMatchers(
+                "/api/auth/**", 
+                "/api/users/reset-password", // Explicitly permit this endpoint
+                "/oauth2/**",
+                "/login/oauth2/code/*"
+            ).permitAll()
             .anyRequest().authenticated()
         .and()
         .oauth2Login()
@@ -51,7 +56,6 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
         
     return http.build();
 }
-
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
         return authConfig.getAuthenticationManager();

@@ -22,7 +22,6 @@ import com.studyplatform.studyplatform.Model.User;
 import com.studyplatform.studyplatform.Service.UserService;
 import com.studyplatform.studyplatform.dto.LoginRequest;
 import com.studyplatform.studyplatform.dto.RegisterRequest;
-import com.studyplatform.studyplatform.dto.ResetPasswordRequest;
 import com.studyplatform.studyplatform.dto.Verify2FARequest;
 
 @RestController
@@ -97,14 +96,20 @@ public class AuthController {
         }
     }
     @GetMapping("/verify-email")
-public ResponseEntity<?> verifyEmail(@RequestParam String token) {
-    boolean verified = userService.verifyEmail(token);
-    if (verified) {
-        return ResponseEntity.ok().body(Map.of("message", "Email verified successfully"));
-    } else {
-        return ResponseEntity.badRequest().body(Map.of("error", "Invalid or expired token"));
+    public ResponseEntity<?> verifyEmail(@RequestParam String token) {
+        System.out.println("Verification endpoint called with token: " + token);
+        try {
+            boolean verified = userService.verifyEmail(token);
+            if (verified) {
+                return ResponseEntity.ok().body(Map.of("message", "Email verified successfully"));
+            } else {
+                return ResponseEntity.badRequest().body(Map.of("message", "Email verification failed"));
+            }
+        } catch (Exception e) {
+            System.out.println("Verification error: " + e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("message", "Error: " + e.getMessage()));
+        }
     }
-}
 
     @PostMapping("/verify-2fa")
     public ResponseEntity<?> verify2FA(@RequestBody Verify2FARequest request) {
@@ -141,13 +146,5 @@ public ResponseEntity<?> verifyEmail(@RequestParam String token) {
         }
     }
 
-    @PostMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
-        try {
-            userService.resetPassword(request.getToken(), request.getNewPassword());
-            return ResponseEntity.ok().build();
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
+
 }

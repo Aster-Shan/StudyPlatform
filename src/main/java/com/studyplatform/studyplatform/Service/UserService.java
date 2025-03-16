@@ -3,10 +3,7 @@ package com.studyplatform.studyplatform.Service;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
-
-import javax.management.RuntimeErrorException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -97,19 +94,26 @@ private IEmailService emailService;
             emailService.sendPasswordResetEmail(user.getEmail(), resetLink);
 
     }
-    public void resetPassword(String token,String newPassword) throws RuntimeErrorException{
+    public void resetPassword(String token, String newPassword) throws RuntimeException {
+        System.out.println("Resetting password for token: " + token);
+        
+        if (token == null || token.isEmpty()) {
+            throw new RuntimeException("Token is required");
+        }
+        
         PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(token)
-        .orElseThrow(()-> new RuntimeErrorException(null, "Token is Invalid"));
-
+            .orElseThrow(() -> new RuntimeException("Token is invalid or expired"));
+    
         if (resetToken.getExpiryDate().isBefore(LocalDateTime.now())) {
             throw new RuntimeException("Token has expired");
         }
-
+    
         User user = resetToken.getUser();
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
         passwordResetTokenRepository.delete(resetToken);
-
+        
+        System.out.println("Password reset successful for user: " + user.getEmail());
     }
     public User updateProfile(String email, ProfileUpdateRequest request){
         User user = getUserByEmail(email);
@@ -163,24 +167,13 @@ private IEmailService emailService;
         }
 
         public boolean verifyEmail(String token) {
-            Optional<VerificationToken> verificationTokenOpt = verificationTokenRepository.findByToken(token);
-            
-            if (!verificationTokenOpt.isPresent()) {
-                return false;
-            }
-            
-            VerificationToken verificationToken = verificationTokenOpt.get();
-            
-            // Check if token is expired
-            if (verificationToken.getExpiryDate().isBefore(LocalDateTime.now())) {
-                verificationTokenRepository.delete(verificationToken);
-                return false;
-            }
+            System.out.println("Verifying email with token: " + token);
+            VerificationToken verificationToken = verificationTokenRepository.findByToken(token)
+                .orElseThrow(() -> new RuntimeException("Invalid verification token"));
             
             User user = verificationToken.getUser();
             user.setEnabled(true);
             userRepository.save(user);
-            verificationTokenRepository.delete(verificationToken);
             
             return true;
         }
