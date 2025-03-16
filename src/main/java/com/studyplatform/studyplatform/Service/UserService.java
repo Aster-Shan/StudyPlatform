@@ -3,6 +3,7 @@ package com.studyplatform.studyplatform.Service;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import javax.management.RuntimeErrorException;
@@ -31,15 +32,14 @@ public class UserService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
-
-    @Autowired
-    private EmailService emailService;
-
     @Autowired
     private PasswordResetTokenRepository passwordResetTokenRepository;
 
     @Autowired
     private CodeVerifier codeVerifier;
+
+    @Autowired
+private IEmailService emailService;
 
     @Autowired
     private VerificationTokenRepository verificationTokenRepository;
@@ -57,9 +57,13 @@ public class UserService {
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
         user.setProvide(User.AuthProvider.LOCAL);
-        user.setEnabled(false); // User starts as disabled
+        
+        // Change back to false to require email verification
+        user.setEnabled(false);
         
         User savedUser = userRepository.save(user);
+        
+        // Uncomment this code to send verification emails
         String token = UUID.randomUUID().toString();
         createVerificationToken(savedUser, token);
         String confirmationUrl = "http://localhost:3000/confirm?token=" + token;
@@ -151,4 +155,34 @@ public class UserService {
         user.setUsing2FA(false);
         userRepository.save(user);
         }
+        public User updateUser(User user) {
+            return userRepository.save(user);
+        }
+        public User save(User user) {
+            return userRepository.save(user);
+        }
+
+        public boolean verifyEmail(String token) {
+            Optional<VerificationToken> verificationTokenOpt = verificationTokenRepository.findByToken(token);
+            
+            if (!verificationTokenOpt.isPresent()) {
+                return false;
+            }
+            
+            VerificationToken verificationToken = verificationTokenOpt.get();
+            
+            // Check if token is expired
+            if (verificationToken.getExpiryDate().isBefore(LocalDateTime.now())) {
+                verificationTokenRepository.delete(verificationToken);
+                return false;
+            }
+            
+            User user = verificationToken.getUser();
+            user.setEnabled(true);
+            userRepository.save(user);
+            verificationTokenRepository.delete(verificationToken);
+            
+            return true;
+        }
+        
 }

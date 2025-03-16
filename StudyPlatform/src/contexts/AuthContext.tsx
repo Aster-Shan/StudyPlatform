@@ -1,119 +1,157 @@
-import axios from 'axios';
-import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
-import api from '../services/api';
-import { User } from '../types';
+"use client"
 
+import axios from "axios"
+import * as React from 'react'
+import { createContext, type ReactNode, useContext, useEffect, useState } from "react"
+import api from "../services/api"
+import type { User } from "../types"
 
 interface AuthContextType {
-  user: User | null;
-  token: string | null;
-  loading: boolean;
-  login: (email: string, password: string) => Promise<unknown>;
-  register: (userData: object) => Promise<void>;
-  logout: () => void;
-  updateUser: (userData: Partial<User>) => void;
+  user: User | null
+  token: string | null
+  loading: boolean
+  login: (email: string, password: string) => Promise<unknown>
+  register: (userData: object) => Promise<void>
+  logout: () => void
+  updateUser: (userData: Partial<User>) => void
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
+  const context = useContext(AuthContext)
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider")
   }
-  return context;
-};
+  return context
+}
 
 interface AuthProviderProps {
-  children: ReactNode;
+  children: ReactNode
 }
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null)
+  const [token, setToken] = useState<string | null>(localStorage.getItem("token"))
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const fetchUser = async () => {
       if (token) {
         try {
-          const response = await api.get('/api/users/profile');
-          setUser(response.data);
+          const response = await api.get("/api/users/profile")
+          setUser(response.data)
         } catch (error) {
-          console.error('Failed to fetch user', error);
-          logout();
+          console.error("Failed to fetch user", error)
+          logout()
         }
       }
-      setLoading(false);
-    };
-
-    fetchUser();
-  }, [token]);
-
-  const login = async (email: string, password: string) => {
-    const response = await api.post('/api/auth/login', { email, password });
-
-    if (response.data.requires2FA) {
-      return {
-        requires2FA: true,
-        tempToken: response.data.tempToken,
-        email,
-      };
+      setLoading(false)
     }
 
-    localStorage.setItem('token', response.data.token);
-    setToken(response.data.token);
-    setUser(response.data.user);
-  };
+    fetchUser()
+  }, [token])
+
+  const login = async (email: string, password: string) => {
+    try {
+      const response = await axios.post("http://localhost:8080/api/auth/login", {
+        email,
+        password,
+      })
+
+      if (response.data.requires2FA) {
+        return {
+          requires2FA: true,
+          tempToken: response.data.tempToken,
+          email,
+        }
+      }
+
+      localStorage.setItem("token", response.data.token)
+      setToken(response.data.token)
+      setUser(response.data.user)
+      return response.data
+    } catch (error: unknown) {
+      console.error("Login error details:", error)
+
+      // Check if it's an Axios error with a response
+      if (axios.isAxiosError(error) && error.response) {
+        console.error("Server response:", {
+          status: error.response.status,
+          data: error.response.data,
+        })
+
+        // Handle specific status codes
+        if (error.response.status === 401) {
+          throw new Error("Invalid email or password. Please try again.")
+        }
+
+        // Throw a more specific error with the server's message
+        const errorMessage =
+          typeof error.response.data === "string" ? error.response.data : error.response.data?.message || "Login failed"
+
+        throw new Error(errorMessage)
+      }
+
+      // If it's any other type of error, convert to Error object if needed
+      if (error instanceof Error) {
+        throw error
+      } else {
+        throw new Error("An unknown error occurred during login")
+      }
+    }
+  }
 
   const register = async (userData: object) => {
     try {
-      console.log('Sending registration data:', userData);
-      
-      const response = await api.post('/api/auth/register', userData);
-      
-      localStorage.setItem('token', response.data.token);
-      setToken(response.data.token);
-      setUser(response.data.user);
+      console.log("Sending registration data:", userData)
+
+      const response = await api.post("/api/auth/register", userData)
+
+      localStorage.setItem("token", response.data.token)
+      setToken(response.data.token)
+      setUser(response.data.user)
     } catch (error: unknown) {
-      console.error('Registration error details:', error);
-      
+      console.error("Registration error details:", error)
+
       // Check if it's an Axios error with a response
       if (axios.isAxiosError(error) && error.response) {
-        console.error('Server response:', {
+        console.error("Server response:", {
           status: error.response.status,
-          data: error.response.data
-        });
-        
+          data: error.response.data,
+        })
+
         // Throw a more specific error with the server's message
-        const errorMessage = typeof error.response.data === 'string' 
-          ? error.response.data 
-          : error.response.data?.message || 'Registration failed';
-        
-        throw new Error(errorMessage);
+        const errorMessage =
+          typeof error.response.data === "string"
+            ? error.response.data
+            : error.response.data?.message || "Registration failed"
+
+        throw new Error(errorMessage)
       }
-      
+
       // If it's any other type of error, convert to Error object if needed
       if (error instanceof Error) {
-        throw error;
+        throw error
       } else {
-        throw new Error('An unknown error occurred during registration');
+        throw new Error("An unknown error occurred during registration")
       }
     }
-  };
+  }
   const logout = () => {
-    localStorage.removeItem('token');
-    setToken(null);
-    setUser(null);
-  };
+    localStorage.removeItem("token")
+    setToken(null)
+    setUser(null)
+  }
 
   const updateUser = (userData: Partial<User>) => {
-    setUser((prev) => (prev ? { ...prev, ...userData } : null));
-  };
+    setUser((prev) => (prev ? { ...prev, ...userData } : null))
+  }
 
   return (
     <AuthContext.Provider value={{ user, token, loading, login, register, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
-  );
-};
+  )
+}
+

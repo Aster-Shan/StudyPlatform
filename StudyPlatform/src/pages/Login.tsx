@@ -1,143 +1,119 @@
-import React, { useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
-import { useAuth } from "../contexts/AuthContext"
+import { Shield } from "lucide-react";
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function Login() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [error, setError] = useState("")
-  const [loading, setLoading] = useState(false)
-  const { login } = useAuth()
-  const navigate = useNavigate()
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
-    setLoading(true)
+  const handleSubmit = async (e: { preventDefault: () => void; }) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
 
     try {
-      await login(email, password)
-      navigate("/")
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message || 'Failed to upload document');
-      } else {
-        setError('Failed to upload document');
-      }
+      await login(email, password);
+      navigate("/");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to sign in");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
-
-  const handleGoogleLogin = () => {
-    window.location.href = `${import.meta.env.VITE_API_URL}/oauth2/authorization/google`
-  }
+  };
 
   return (
-    <div className="d-flex justify-content-center align-items-center min-vh-80">
-      <div className="card w-100 max-w-md">
-        <div className="card-body border-bottom">
-          <h2 className="card-title text-center">Sign In</h2>
-          <p className="text-center text-muted mt-1">Enter your credentials to access your account</p>
-        </div>
-
-        <div className="card-body">
-          {error && (
-            <div className="alert alert-danger d-flex align-items-center" role="alert">
-              <i className="bi bi-exclamation-circle-fill mr-2"></i>
-              <p>{error}</p>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="mb-4">
-            <div className="mb-3">
-              <label htmlFor="email" className="form-label">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                placeholder="name@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="form-control"
-              />
-            </div>
-
-            <div className="mb-3">
-              <div className="d-flex justify-content-between">
-                <label htmlFor="password" className="form-label">
-                  Password
-                </label>
-                <Link to="/forgot-password" className="text-decoration-none text-primary">
-                  Forgot password?
-                </Link>
+    <div className="vh-100 vw-100 d-flex align-items-center justify-content-center bg-light" >
+      <div className="container" style={{ maxWidth: '1500px' }}>
+        <div className="row justify-content-center">
+          <div className="col-md-10 col-lg-8 col-xl-7">
+            <div className="card border-0 shadow-lg" style={{ borderRadius: '15px' }}>
+              <div
+                className="card-header border-0 text-white py-5"
+                style={{
+                  background: "linear-gradient(135deg, #000000 0%, #2c3e50 100%)",
+                  borderBottom: "1px solid rgba(255,255,255,0.1)",
+                  borderTopLeftRadius: '15px',
+                  borderTopRightRadius: '15px'
+                }}
+              >
+                <div className="d-flex align-items-center justify-content-between">
+                  <div>
+                    <h3 className="mb-1 fw-bold" style={{ fontSize: '1.8rem' }}>Sign In</h3>
+                    <p className="mb-0 opacity-75" style={{ fontSize: '1rem' }}>Access your account securely</p>
+                  </div>
+                  <div className="rounded-circle bg-white bg-opacity-10 p-3">
+                    <Shield size={28} className="text-white" />
+                  </div>
+                </div>
               </div>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="form-control"
-              />
-            </div>
 
-            <button
-              type="submit"
-              className={`btn w-100 ${loading ? "btn-primary" : "btn-primary"}`}
-              disabled={loading}
-            >
-              {loading ? "Signing in..." : "Sign In"}
-            </button>
-          </form>
+              <div className="card-body p-5">
+                {error && <div className="alert alert-danger">{error}</div>}
+                <form className="mb-4" onSubmit={handleSubmit}>
+                  <div className="mb-4">
+                    <label htmlFor="email" className="form-label" style={{ fontSize: '1.2rem' }}>
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      className="form-control"
+                      id="email"
+                      placeholder="Enter your email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      style={{ fontSize: '1rem' }}
+                    />
+                  </div>
 
-          <div className="mt-4">
-            <div className="d-flex justify-content-center align-items-center mb-3">
-              <hr className="col-5" />
-              <span className="px-2">Or continue with</span>
-              <hr className="col-5" />
-            </div>
+                  <div className="mb-5">
+                    <div className="d-flex justify-content-between">
+                      <label htmlFor="password" className="form-label" style={{ fontSize: '1.2rem' }}>
+                        Password
+                      </label>
+                      <Link to="/forgot-password" className="text-primary text-decoration-none" style={{ fontSize: '1rem' }}>
+                        Forgot?
+                      </Link>
+                    </div>
+                    <input
+                      type="password"
+                      className="form-control"
+                      id="password"
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      style={{ fontSize: '1rem' }}
+                    />
+                  </div>
 
-            <button
-              className="btn w-100 btn-outline-secondary"
-              onClick={handleGoogleLogin}
-            >
-              <div className="d-flex justify-content-center align-items-center">
-                <svg className="mr-2" width="16" height="16" viewBox="0 0 24 24">
-                  <path
-                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                    fill="#4285F4"
-                  />
-                  <path
-                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                    fill="#34A853"
-                  />
-                  <path
-                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                    fill="#FBBC05"
-                  />
-                  <path
-                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                    fill="#EA4335"
-                  />
-                </svg>
-                Google
+                  <button type="submit" className="btn btn-primary w-100 py-3 mb-4" disabled={loading} style={{ fontSize: '1.2rem' }}>
+                    {loading ? "Signing in..." : "Sign In"}
+                  </button>
+                </form>
+
+                <div className="text-center">
+                  <p className="mb-0" style={{ fontSize: '1rem' }}>
+                    Don't have an account? {" "}
+                    <Link to="/register" className="text-primary text-decoration-none">
+                      Sign up
+                    </Link>
+                  </p>
+                </div>
               </div>
-            </button>
+            </div>
+
+            <div className="text-center mt-5">
+              <p className="small text-muted mb-0" style={{ fontSize: '0.9rem' }}>© 2023 UserManagement. All rights reserved.</p>
+            </div>
           </div>
-        </div>
-
-        <div className="card-body text-center">
-          <p className="text-sm text-muted">
-            Don't have an account?{" "}
-            <Link to="/register" className="text-primary text-decoration-none">
-              Sign up
-            </Link>
-          </p>
         </div>
       </div>
     </div>
-  )
+  );
 }

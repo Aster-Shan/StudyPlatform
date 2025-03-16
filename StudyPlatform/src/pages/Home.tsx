@@ -304,7 +304,9 @@ export default function Home() {
                         </div>
                       </div>
                       <p className="text-muted">No bio added yet. Add information about yourself.</p>
-                      <button className="btn btn-outline-primary btn-sm">Add Bio</button>
+                      <button className="btn btn-outline-primary btn-sm" onClick={goToProfile}>
+                        Add Bio
+                      </button>
                     </div>
                   )}
                 </div>
@@ -344,7 +346,9 @@ export default function Home() {
                         </div>
                       </div>
                       <p className="text-muted">No academic interests added yet.</p>
-                      <button className="btn btn-outline-primary btn-sm">Add Interests</button>
+                      <button className="btn btn-outline-primary btn-sm" onClick={goToProfile}>
+                        Add Interests
+                      </button>
                     </div>
                   )}
                 </div>

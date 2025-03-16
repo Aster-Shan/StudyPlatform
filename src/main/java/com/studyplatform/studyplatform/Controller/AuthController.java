@@ -10,6 +10,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -63,6 +64,14 @@ public class AuthController {
             
             User user = userService.getUserByEmail(request.getEmail());
             
+            // Check if user is enabled (email verified)
+            if (!user.isEnabled()) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("error", "Email not verified");
+                response.put("message", "Please check your email to verify your account");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+            }
+            
             // Check if 2FA is enabled
             if (user.isUsing2FA()) {
                 // Generate a temporary token with short expiration
@@ -87,6 +96,15 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
         }
     }
+    @GetMapping("/verify-email")
+public ResponseEntity<?> verifyEmail(@RequestParam String token) {
+    boolean verified = userService.verifyEmail(token);
+    if (verified) {
+        return ResponseEntity.ok().body(Map.of("message", "Email verified successfully"));
+    } else {
+        return ResponseEntity.badRequest().body(Map.of("error", "Invalid or expired token"));
+    }
+}
 
     @PostMapping("/verify-2fa")
     public ResponseEntity<?> verify2FA(@RequestBody Verify2FARequest request) {

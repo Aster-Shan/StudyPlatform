@@ -36,7 +36,7 @@ export default function Setup2FA() {
     setup2FA();
   }, [user]);
 
-  const handleVerify = async (e) => {
+  const handleVerify = async (e: { preventDefault: () => void; }) => {
     e.preventDefault();
     setError("");
     setVerifying(true);

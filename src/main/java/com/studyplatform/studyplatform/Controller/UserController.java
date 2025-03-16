@@ -3,6 +3,8 @@ import java.security.Principal;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -44,5 +46,18 @@ public class UserController {
         String fileUrl = fileStorageService.storeFile(file);
         User user = userService.updateProfilePicture(principal.getName(), fileUrl);
         return ResponseEntity.ok(fileUrl);
+    }
+    @DeleteMapping("/picture")
+    public ResponseEntity<?> deleteProfilePicture(Authentication authentication) {
+        User user = (User) authentication.getPrincipal();
+        
+        // Delete profile picture if exists
+        if (user.getProfilePictureUrl() != null) {
+            fileStorageService.deleteFile(user.getProfilePictureUrl());
+            user.setProfilePictureUrl(null);
+            userService.save(user);
+        }
+        
+        return ResponseEntity.ok().body("Profile picture deleted successfully");
     }
 }

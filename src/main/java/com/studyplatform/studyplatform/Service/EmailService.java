@@ -1,14 +1,17 @@
 package com.studyplatform.studyplatform.Service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 @Service
-public class EmailService {
+@Profile("prod")  // Only use in production
+public class EmailService implements IEmailService {
     @Autowired
     private JavaMailSender mailSender;
+    
 
     public void sendPasswordResetEmail(String to, String resetLink){
         SimpleMailMessage message= new SimpleMailMessage();

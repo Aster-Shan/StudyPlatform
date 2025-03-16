@@ -1,5 +1,3 @@
-// src/pages/ForgotPassword.tsx
-
 import { AlertCircle } from "lucide-react";
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
@@ -22,7 +20,6 @@ export default function ForgotPassword() {
       });
       setSuccess(true);
     } catch (err: unknown) {
-
       if (err instanceof Error) {
         setError(err.message || 'Failed to upload document');
       } else {
@@ -34,64 +31,86 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-[80vh]">
-      <div className="w-full max-w-md bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="p-6 border-b border-gray-200">
-          <h2 className="text-2xl font-semibold text-center">Forgot Password</h2>
-          <p className="text-center text-gray-500 mt-1">Enter your email to receive a password reset link</p>
-        </div>
-
-        <div className="p-6">
-          {error && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md text-red-800 flex items-start">
-              <AlertCircle className="h-4 w-4 mr-2 mt-0.5" />
-              <p>{error}</p>
-            </div>
-          )}
-
-          {success ? (
-            <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-md text-green-800">
-              <p>If an account exists with that email, we've sent a password reset link. Please check your inbox.</p>
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                  Email
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  placeholder="name@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
+    <div className="vh-100 vw-100 d-flex align-items-center justify-content-center bg-light">
+      <div className="container" style={{ maxWidth: '1500px' }}>
+        <div className="row justify-content-center">
+          <div className="col-md-10 col-lg-8 col-xl-7">
+            <div className="card border-0 shadow-lg" style={{ borderRadius: '15px' }}>
+              <div
+                className="card-header border-0 text-white py-5"
+                style={{
+                  background: "linear-gradient(135deg, #000000 0%, #2c3e50 100%)",
+                  borderBottom: "1px solid rgba(255,255,255,0.1)",
+                  borderTopLeftRadius: '15px',
+                  borderTopRightRadius: '15px'
+                }}
+              >
+                <div className="d-flex align-items-center justify-content-between">
+                  <div>
+                    <h3 className="mb-1 fw-bold" style={{ fontSize: '1.8rem' }}>Forgot Password</h3>
+                    <p className="mb-0 opacity-75" style={{ fontSize: '1rem' }}>Enter your email to receive a password reset link</p>
+                  </div>
+                  <div className="rounded-circle bg-white bg-opacity-10 p-3">
+                    <AlertCircle size={28} className="text-white" />
+                  </div>
+                </div>
               </div>
 
-              <button
-                type="submit"
-                className={`w-full py-2 px-4 rounded-md text-white font-medium ${
-                  loading ? "bg-blue-400" : "bg-blue-600 hover:bg-blue-700"
-                }`}
-                disabled={loading}
-              >
-                {loading ? "Sending..." : "Send Reset Link"}
-              </button>
-            </form>
-          )}
-        </div>
+              <div className="card-body p-5">
+                {error && (
+                  <div className="alert alert-danger">{error}</div>
+                )}
 
-        <div className="p-6 border-t border-gray-200 text-center">
-          <p className="text-sm text-gray-600">
-            Remember your password?{" "}
-            <Link to="/login" className="text-blue-600 hover:underline">
-              Back to login
-            </Link>
-          </p>
+                {success ? (
+                  <div className="alert alert-success">
+                    If an account exists with that email, we've sent a password reset link. Please check your inbox.
+                  </div>
+                ) : (
+                  <form onSubmit={handleSubmit}>
+                    <div className="mb-4">
+                      <label htmlFor="email" className="form-label" style={{ fontSize: '1.2rem' }}>
+                        Email
+                      </label>
+                      <input
+                        id="email"
+                        type="email"
+                        placeholder="name@example.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                        className="form-control"
+                        style={{ fontSize: '1rem' }}
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="btn btn-primary w-100 py-3 mb-4"
+                      disabled={loading}
+                      style={{ fontSize: '1.2rem' }}
+                    >
+                      {loading ? "Sending..." : "Send Reset Link"}
+                    </button>
+                  </form>
+                )}
+              </div>
+
+              <div className="text-center mb-5">
+              <p className="mb-0" style={{ fontSize: '1rem' }}>
+                  Remember your password?{" "}
+                  <Link to="/login" className="text-primary text-decoration-none">
+                    Back to login
+                  </Link>
+                </p>
+              </div>
+            </div>
+
+            <div className="text-center mt-5">
+              <p className="small text-muted mb-0" style={{ fontSize: '0.9rem' }}>© 2023 UserManagement. All rights reserved.</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-  )
+  );
 }

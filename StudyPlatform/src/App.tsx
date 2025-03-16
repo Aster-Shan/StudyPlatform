@@ -5,6 +5,7 @@ import Navbar from "./components/Navbar"
 import ProtectedRoute from "./components/ProtectedRoute"
 import { AuthProvider } from "./contexts/AuthContext"
 import Documents from "./pages/Documents"
+import EmailConfirmation from './pages/EmailConfirmation'
 import ForgotPassword from "./pages/ForgotPassword"
 import Home from "./pages/Home"
 import Login from "./pages/Login"
@@ -52,6 +53,7 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route path="/confirm" element={<EmailConfirmation />} />
               <Route
                 path="/documents"
                 element={

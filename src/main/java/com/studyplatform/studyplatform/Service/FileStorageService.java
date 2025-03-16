@@ -10,6 +10,7 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @Service
 public class FileStorageService {
@@ -33,18 +34,27 @@ public class FileStorageService {
             
             Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
             
-            return fileName;
+            String fileUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+                    .path("/api/files/")
+                    .path(fileName)
+                    .toUriString();
+
+            return fileUrl;
         } catch (IOException ex) {
             throw new RuntimeException("Could not store file " + file.getOriginalFilename(), ex);
         }
     }
     
-    public void deleteFile(String fileName) {
+    public void deleteFile(String fileUrl) {
         try {
-            Path filePath = Paths.get(uploadDir).toAbsolutePath().normalize().resolve(fileName);
+            // Extract the file name from the URL
+            String fileName = fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
+            
+            // Delete the file
+            Path filePath = Paths.get(uploadDir).resolve(fileName);
             Files.deleteIfExists(filePath);
         } catch (IOException ex) {
-            throw new RuntimeException("Could not delete file " + fileName, ex);
+            throw new RuntimeException("Could not delete file. Please try again!", ex);
         }
     }
     
