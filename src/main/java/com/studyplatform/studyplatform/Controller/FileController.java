@@ -44,7 +44,7 @@ public class FileController {
                 return ResponseEntity.notFound().build();
             }
         } catch (MalformedURLException ex) {
-            return ResponseEntity.badRequest().build();
+        return ResponseEntity.badRequest().build();
         }
     }
 }

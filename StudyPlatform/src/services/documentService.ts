@@ -1,7 +1,7 @@
 import type { Document } from "../types"
 import api from "./api"
 
-export const uploadDocument = async (file: File, description?: string): Promise<Document> => {
+export const uploadDocument = async (file: File, description?: string) => {
   const formData = new FormData()
   formData.append("file", file)
 
@@ -23,16 +23,17 @@ export const getUserDocuments = async (): Promise<Document[]> => {
   return response.data
 }
 
-export const getDocument = async (id: number): Promise<Document> => {
-  const response = await api.get(`/api/documents/${id}`)
+export const getDocumentStats = async () => {
+  const response = await api.get("/api/documents/stats")
   return response.data
 }
 
-export const deleteDocument = async (id: number): Promise<void> => {
-  await api.delete(`/api/documents/${id}`)
+export const deleteDocument = async (id: number) => {
+  const response = await api.delete(`/api/documents/${id}`)
+  return response.data
 }
 
-export const getDownloadUrl = (id: number): string => {
-  return `${process.env.NEXT_PUBLIC_API_URL}/api/documents/${id}/download`
+export const getDownloadUrl = (id: number) => {
+  return `${api.defaults.baseURL}/api/documents/${id}/download`
 }
 

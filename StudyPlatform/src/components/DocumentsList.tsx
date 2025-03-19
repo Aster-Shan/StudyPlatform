@@ -121,13 +121,13 @@ export default function DocumentsList({ refreshTrigger = 0 }: DocumentsListProps
                         <button
                           className="p-1 rounded-md border border-gray-300 hover:bg-gray-50"
                           onClick={() => window.open(getDownloadUrl(doc.id), "_blank")}
-                        >type="button"
+                        >
                           <Download className="h-4 w-4" />
                         </button>
                         <button
                           className="p-1 rounded-md border border-gray-300 hover:bg-gray-50"
                           onClick={() => handleDelete(doc.id)}
-                        >type="button"
+                        >
                           <Trash2 className="h-4 w-4 text-red-500" />
                         </button>
                       </div>

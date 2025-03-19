@@ -386,7 +386,7 @@ export default function Profile() {
                         </span>
                         <button
                           className={`btn ${user.using2FA ? "btn-outline-primary" : "btn-primary"}`}
-                          onClick={() => (window.location.href = "/setup-2fa")}
+                          onClick={() => (window.location.href = "/Setup2FA")}
                         >
                           {user.using2FA ? "Manage 2FA" : "Enable 2FA"}
                         </button>
