@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -63,6 +64,31 @@ public class DocumentService {
         stats.put("pdf", pdfCount);
         stats.put("image", imageCount);
         stats.put("other", otherCount);
+        
+        return stats;
+    }
+
+    public List<Document> searchDocuments(String query) {
+        return documentRepository.findByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCase(query);
+    }
+
+    public List<Document> getPublicDocuments() {
+        return documentRepository.findByIsPublicTrue();
+    }
+
+    public Map<String, Object> getDocumentActivityStats(Long documentId) {
+        Document document = getDocumentById(documentId);
+        
+        // For demonstration purposes, generate random stats
+        // In a real application, you would track views, downloads, etc.
+        Random random = new Random();
+        int views = random.nextInt(100);
+        int downloads = random.nextInt(20);
+        
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("views", views);
+        stats.put("downloads", downloads);
+        stats.put("lastAccessed", document.getUploadedAt());
         
         return stats;
     }

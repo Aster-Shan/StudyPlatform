@@ -17,6 +17,23 @@ export interface User {
     fileSize: number
     uploadedAt: string
     userId: string
+    fileUrl: string
+    user: User
+    isPublic : boolean
   }
   
   
+export interface Comment {
+  id: number
+  content: string
+  document: Document
+  user: User
+  createdAt: string
+  updatedAt: string
+}
+
+export interface DocumentActivityStats {
+  views: number
+  downloads: number
+  lastAccessed: string
+}

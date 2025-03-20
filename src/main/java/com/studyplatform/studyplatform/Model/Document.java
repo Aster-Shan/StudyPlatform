@@ -16,101 +16,117 @@ import javax.persistence.Table;
 @Table(name = "documents")
 public class Document {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    
-    @Column(nullable = false)
-    private String name;
-    
-    @Column(nullable = false)
-    private String fileUrl;
-    
-    @Column(nullable = false)
-    private String fileType;
-    
-    @Column(nullable = false)
-    private Long fileSize;
-    
-    @Column
-    private String description;
-    
-    @Column(nullable = false)
-    private LocalDateTime uploadedAt;
-    
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
-    
-    @PrePersist
-    protected void onCreate() {
-        uploadedAt = LocalDateTime.now();
-    }
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
+  
+  @Column(nullable = false)
+  private String name;
+  
+  @Column(nullable = false)
+  private String fileUrl;
+  
+  @Column(nullable = false)
+  private String fileType;
+  
+  @Column(nullable = false)
+  private Long fileSize;
+  
+  @Column
+  private String description;
+  
+  @Column(nullable = false)
+  private LocalDateTime uploadedAt;
 
-    // Getters and Setters
-    
-    public Long getId() {
-        return id;
-    }
+  @Column(nullable = false)
+  private boolean isPublic = false;
+  
+  @ManyToOne
+  @JoinColumn(name = "user_id", nullable = false)
+  private User user;
+  
+  @PrePersist
+  protected void onCreate() {
+      uploadedAt = LocalDateTime.now();
+  }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+  // Constructors
+  public Document() {
+      this.isPublic = false;
+  }
+  
+  // Getters and Setters
+  
+  public Long getId() {
+      return id;
+  }
 
-    public String getName() {
-        return name;
-    }
+  public void setId(Long id) {
+      this.id = id;
+  }
 
-    public void setName(String name) {
-        this.name = name;
-    }
+  public String getName() {
+      return name;
+  }
 
-    public String getFileUrl() {
-        return fileUrl;
-    }
+  public void setName(String name) {
+      this.name = name;
+  }
 
-    public void setFileUrl(String fileUrl) {
-        this.fileUrl = fileUrl;
-    }
+  public String getFileUrl() {
+      return fileUrl;
+  }
 
-    public String getFileType() {
-        return fileType;
-    }
+  public void setFileUrl(String fileUrl) {
+      this.fileUrl = fileUrl;
+  }
 
-    public void setFileType(String fileType) {
-        this.fileType = fileType;
-    }
+  public String getFileType() {
+      return fileType;
+  }
 
-    public Long getFileSize() {
-        return fileSize;
-    }
+  public void setFileType(String fileType) {
+      this.fileType = fileType;
+  }
 
-    public void setFileSize(Long fileSize) {
-        this.fileSize = fileSize;
-    }
+  public Long getFileSize() {
+      return fileSize;
+  }
 
-    public String getDescription() {
-        return description;
-    }
+  public void setFileSize(Long fileSize) {
+      this.fileSize = fileSize;
+  }
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
+  public String getDescription() {
+      return description;
+  }
 
-    public LocalDateTime getUploadedAt() {
-        return uploadedAt;
-    }
+  public void setDescription(String description) {
+      this.description = description;
+  }
 
-    public void setUploadedAt(LocalDateTime uploadedAt) {
-        this.uploadedAt = uploadedAt;
-    }
+  public LocalDateTime getUploadedAt() {
+      return uploadedAt;
+  }
 
-    public User getUser() {
-        return user;
-    }
+  public void setUploadedAt(LocalDateTime uploadedAt) {
+      this.uploadedAt = uploadedAt;
+  }
 
-    public void setUser(User user) {
-        this.user = user;
-    }
+  public User getUser() {
+      return user;
+  }
+
+  public void setUser(User user) {
+      this.user = user;
+  }
+
+  public boolean isPublic() {
+      return isPublic;
+  }
+
+  public void setPublic(boolean isPublic) {
+      this.isPublic = isPublic;
+  }
 }
 

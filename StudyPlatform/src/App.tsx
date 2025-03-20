@@ -1,11 +1,13 @@
-import 'bootstrap/dist/css/bootstrap.min.css'
-import React from "react"
+"use client"
+
+import "bootstrap/dist/css/bootstrap.min.css"
+import React, { useEffect } from "react"
 import { Route, BrowserRouter as Router, Routes } from "react-router-dom"
-import Navbar from "./components/Navbar"
 import ProtectedRoute from "./components/ProtectedRoute"
 import { AuthProvider } from "./contexts/AuthContext"
+import DocumentDetail from "./pages/DocumentDetail"
 import Documents from "./pages/Documents"
-import EmailConfirmation from './pages/EmailConfirmation'
+import EmailConfirmation from "./pages/EmailConfirmation"
 import ForgotPassword from "./pages/ForgotPassword"
 import Home from "./pages/Home"
 import Login from "./pages/Login"
@@ -14,18 +16,21 @@ import Register from "./pages/Register"
 import ResetPassword from "./pages/ResetPassword"
 import Setup2FA from "./pages/Setup2FA"
 
-
-
 function App() {
+  useEffect(() => {
+    // Initialize Bootstrap JavaScript
+    if (typeof window !== "undefined" && typeof document !== "undefined") {
+      import("bootstrap")
+    }
+  }, [])
+
   return (
     <AuthProvider>
       <Router>
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-          <Navbar />
           <main className="container mx-auto py-8 px-4">
             <Routes>
               <Route path="/login" element={<Login />} />
-              
               <Route path="/register" element={<Register />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
@@ -59,6 +64,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Documents />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/documents/:id"
+                element={
+                  <ProtectedRoute>
+                    <DocumentDetail />
                   </ProtectedRoute>
                 }
               />

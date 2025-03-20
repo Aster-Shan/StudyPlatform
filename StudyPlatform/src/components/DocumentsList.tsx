@@ -1,62 +1,82 @@
+"use client"
 
 import { formatDistanceToNow } from "date-fns"
-import { AlertCircle, Download, FileText, Trash2 } from "lucide-react"
+import { Download, FileText, Trash2 } from 'lucide-react'
 import React, { useEffect, useState } from "react"
+import { Link } from "react-router-dom"
 import { deleteDocument, getDownloadUrl, getUserDocuments } from "../services/documentService"
 import type { Document } from "../types"
 
 interface DocumentsListProps {
   refreshTrigger?: number
+  onDocumentDeleted?: () => void
+  documents?: Document[] // Add this prop
 }
 
-export default function DocumentsList({ refreshTrigger = 0 }: DocumentsListProps) {
+export default function DocumentsList({ refreshTrigger = 0, onDocumentDeleted, documents: propDocuments }: DocumentsListProps) {
   const [documents, setDocuments] = useState<Document[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
 
   useEffect(() => {
-    const fetchDocuments = async () => {
-      setLoading(true)
-      try {
-        const data = await getUserDocuments()
-        setDocuments(data)
-        setError("")
-      } catch (err: unknown) {
-        setError("Failed to load documents")
-        console.error(err)
-      } finally {
-        setLoading(false)
-      }
+    // Only fetch documents if they weren't provided as props
+    if (!propDocuments) {
+      fetchDocuments()
+    } else {
+      setDocuments(propDocuments)
+      setLoading(false)
     }
+  }, [refreshTrigger, propDocuments])
 
-    fetchDocuments()
-  }, [refreshTrigger])
+  const fetchDocuments = async () => {
+    try {
+      setLoading(true)
+      const data = await getUserDocuments()
+      setDocuments(data)
+      setError("")
+    } catch (err) {
+      setError("Failed to load documents")
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: number, e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+
     if (!window.confirm("Are you sure you want to delete this document?")) {
       return
     }
 
     try {
       await deleteDocument(id)
-      setDocuments(documents.filter((doc) => doc.id !== id))
+      // Refresh the documents list
+      if (propDocuments) {
+        // If documents were provided as props, just filter them
+        setDocuments(documents.filter(doc => doc.id !== id))
+      } else {
+        // Otherwise fetch fresh data
+        fetchDocuments()
+      }
+      // Notify parent component if callback provided
+      if (onDocumentDeleted) {
+        onDocumentDeleted()
+      }
     } catch (err) {
-      setError("Failed to delete document")
-      console.error(err)
+      console.error("Failed to delete document:", err)
+      alert("Failed to delete document. Please try again.")
     }
   }
 
   const getFileIcon = (fileType: string) => {
     if (fileType.includes("pdf")) {
-      return <FileText className="h-4 w-4 text-red-500" />
-    } else if (fileType.includes("word") || fileType.includes("doc")) {
-      return <FileText className="h-4 w-4 text-blue-500" />
-    } else if (fileType.includes("sheet") || fileType.includes("excel") || fileType.includes("xls")) {
-      return <FileText className="h-4 w-4 text-green-500" />
+      return <FileText className="h-5 w-5 text-red-500" />
     } else if (fileType.includes("image") || fileType.includes("jpg") || fileType.includes("png")) {
-      return <FileText className="h-4 w-4 text-purple-500" />
+      return <FileText className="h-5 w-5 text-green-500" />
     } else {
-      return <FileText className="h-4 w-4" />
+      return <FileText className="h-5 w-5 text-blue-500" />
     }
   }
 
@@ -70,76 +90,83 @@ export default function DocumentsList({ refreshTrigger = 0 }: DocumentsListProps
     }
   }
 
-  return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-      <div className="px-6 py-4 border-b border-gray-200">
-        <h3 className="font-semibold">My Documents</h3>
+  if (loading) {
+    return (
+      <div className="d-flex justify-content-center py-4">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
       </div>
-      <div className="p-6">
-        {error && (
-          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md text-red-800 flex items-start">
-            <AlertCircle className="h-4 w-4 mr-2 mt-0.5" />
-            <p>{error}</p>
-          </div>
-        )}
+    )
+  }
 
-        {loading ? (
-          <div className="text-center py-4">Loading documents...</div>
-        ) : documents.length === 0 ? (
-          <div className="text-center py-4 text-gray-500">You haven't uploaded any documents yet.</div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 px-4 font-medium">Name</th>
-                  <th className="text-left py-3 px-4 font-medium">Type</th>
-                  <th className="text-left py-3 px-4 font-medium">Size</th>
-                  <th className="text-left py-3 px-4 font-medium">Uploaded</th>
-                  <th className="text-right py-3 px-4 font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {documents.map((doc) => (
-                  <tr key={doc.id} className="border-b border-gray-200 hover:bg-gray-50">
-                    <td className="py-3 px-4">
-                      <div className="flex items-center">
-                        {getFileIcon(doc.fileType)}
-                        <span className="ml-2 font-medium">{doc.name}</span>
-                      </div>
-                      {doc.description && <p className="text-xs text-gray-500 mt-1">{doc.description}</p>}
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                        {doc.fileType.split("/")[1]?.toUpperCase() || doc.fileType}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4">{formatFileSize(doc.fileSize)}</td>
-                    <td className="py-3 px-4">{formatDistanceToNow(new Date(doc.uploadedAt), { addSuffix: true })}</td>
-                    <td className="py-3 px-4 text-right">
-                      <div className="flex justify-end space-x-2">
-                        <button
-                          className="p-1 rounded-md border border-gray-300 hover:bg-gray-50"
-                          onClick={() => window.open(getDownloadUrl(doc.id), "_blank")}
-                        >
-                          <Download className="h-4 w-4" />
-                        </button>
-                        <button
-                          className="p-1 rounded-md border border-gray-300 hover:bg-gray-50"
-                          onClick={() => handleDelete(doc.id)}
-                        >
-                          <Trash2 className="h-4 w-4 text-red-500" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+  if (error) {
+    return (
+      <div className="alert alert-danger" role="alert">
+        {error}
       </div>
+    )
+  }
+
+  if (documents.length === 0) {
+    return (
+      <div className="text-center py-5">
+        <FileText size={48} className="text-muted mb-3" />
+        <h5>No documents found</h5>
+        <p className="text-muted">Upload your first document to get started</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="table-responsive">
+      <table className="table table-hover align-middle">
+        <thead>
+          <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Type</th>
+            <th scope="col">Size</th>
+            <th scope="col">Uploaded</th>
+            <th scope="col" className="text-end">
+              Actions
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {documents.map((doc) => (
+            <tr key={doc.id} className="cursor-pointer">
+              <td>
+                <Link to={`/documents/${doc.id}`} className="text-decoration-none text-dark d-flex align-items-center">
+                  {getFileIcon(doc.fileType)}
+                  <span className="ms-2">
+                    {doc.name}
+                    {doc.isPublic && <span className="badge bg-success ms-2 small">Public</span>}
+                  </span>
+                </Link>
+              </td>
+              <td>{doc.fileType.split("/")[1]?.toUpperCase() || doc.fileType}</td>
+              <td>{formatFileSize(doc.fileSize)}</td>
+              <td>{formatDistanceToNow(new Date(doc.uploadedAt), { addSuffix: true })}</td>
+              <td>
+                <div className="d-flex justify-content-end">
+                  <a
+                    href={getDownloadUrl(doc.id)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-sm btn-outline-primary me-2"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Download size={16} />
+                  </a>
+                  <button onClick={(e) => handleDelete(doc.id, e)} className="btn btn-sm btn-outline-danger">
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   )
 }
-

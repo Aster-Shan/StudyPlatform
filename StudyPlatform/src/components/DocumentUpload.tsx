@@ -1,116 +1,179 @@
-import React, { useState } from "react";
-import { uploadDocument } from '../services/documentService';
+"use client"
+
+import { FileText, Upload, X } from "lucide-react"
+import React, { useRef, useState } from "react"
+import { uploadDocument } from "../services/documentService"
 
 interface DocumentUploadProps {
-  onUploadSuccess?: () => void;
+  onUploadSuccess: () => void
 }
 
 export default function DocumentUpload({ onUploadSuccess }: DocumentUploadProps) {
-  const [file, setFile] = useState<File | null>(null);
-  const [description, setDescription] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
+  const [file, setFile] = useState<File | null>(null)
+  const [description, setDescription] = useState("")
+  const [isPublic, setIsPublic] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [error, setError] = useState("")
+  const [dragActive, setDragActive] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true)
+    } else if (e.type === "dragleave") {
+      setDragActive(false)
+    }
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragActive(false)
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      setFile(e.dataTransfer.files[0])
+    }
+  }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
+      setFile(e.target.files[0])
     }
-  };
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!file) {
-      setError('Please select a file to upload');
-      return;
-    }
-    
-    setLoading(true);
-    setError('');
-    setSuccess(false);
-    
-    try {
-      await uploadDocument(file, description);
-      setSuccess(true);
-      setFile(null);
-      setDescription('');
-      
-      if (onUploadSuccess) {
-        onUploadSuccess();
-      }
-    } catch (err: unknown) {
+    e.preventDefault()
+    if (!file) return
 
-      if (err instanceof Error) {
-        setError(err.message || 'Failed to upload document');
-      } else {
-        setError('Failed to upload document');
-      }
+    setUploading(true)
+    setError("")
+
+    try {
+      console.log("Uploading document with isPublic:", isPublic) // Debug log
+      await uploadDocument(file, description, isPublic)
+      setFile(null)
+      setDescription("")
+      setIsPublic(false)
+      onUploadSuccess()
+    } catch (err) {
+      console.error("Upload failed:", err)
+      setError("Failed to upload document. Please try again.")
     } finally {
-      setLoading(false);
+      setUploading(false)
     }
-  };
+  }
+
+  const handleButtonClick = () => {
+    fileInputRef.current?.click()
+  }
+
+  const removeFile = () => {
+    setFile(null)
+  }
 
   return (
-    <div className="max-w-3xl mx-auto bg-white shadow-lg rounded-lg p-6">
-      <div className="text-2xl font-semibold text-center mb-6">Upload Document</div>
-      
+    <div>
       {error && (
-        <div className="alert alert-error mb-4 bg-red-50 text-red-800 border border-red-200 p-4 rounded-lg">
-          <span className="text-lg font-medium">Error:</span> {error}
+        <div className="alert alert-danger mb-4" role="alert">
+          {error}
         </div>
       )}
-      
-      {success && (
-        <div className="alert alert-success mb-4 bg-green-50 text-green-800 border border-green-200 p-4 rounded-lg">
-          Document uploaded successfully!
-        </div>
-      )}
-      
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-2">
-          <label htmlFor="file" className="block text-sm font-medium text-gray-700">Select Document</label>
-          <input 
-            id="file" 
-            type="file" 
-            onChange={handleFileChange}
-            accept=".pdf,.doc,.docx,.txt,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png"
-            className="w-full p-2 border border-gray-300 rounded-md"
-          />
-          {file && (
-            <p className="text-sm text-gray-500 mt-2">
-              Selected file: {file.name} ({(file.size / 1024).toFixed(2)} KB)
-            </p>
-          )}
-        </div>
-        
-        <div className="space-y-2">
-          <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description (Optional)</label>
-          <textarea 
-            id="description" 
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Enter a description for this document"
-            className="w-full p-2 border border-gray-300 rounded-md min-h-[100px]"
-          />
-        </div>
 
-        <button 
-          type="submit" 
-          onClick={handleSubmit}
-          disabled={loading || !file}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:bg-gray-400"
-        >
-          {loading ? (
-            <>Uploading...</>
-          ) : (
-            <>
-              <span className="mr-2">📤</span>
-              Upload Document
-            </>
-          )}
-        </button>
+      <form onSubmit={handleSubmit}>
+        {!file ? (
+          <div
+            className={`border-2 border-dashed rounded-lg p-5 text-center ${
+              dragActive ? "border-primary bg-primary bg-opacity-10" : "border-gray-300"
+            }`}
+            onDragEnter={handleDrag}
+            onDragLeave={handleDrag}
+            onDragOver={handleDrag}
+            onDrop={handleDrop}
+          >
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="hidden"
+              accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.jpg,.jpeg,.png,.gif"
+            />
+
+            <div className="mb-3 flex justify-center">
+              <Upload size={48} className="text-primary" />
+            </div>
+            <h5 className="mb-2 font-medium">Drag and drop your file here</h5>
+            <p className="text-muted mb-4">or</p>
+            <button
+              type="button"
+              onClick={handleButtonClick}
+              className="btn btn-primary d-inline-flex align-items-center"
+            >
+              <FileText size={16} className="me-2" />
+              Browse Files
+            </button>
+            <p className="mt-3 text-muted small">
+              Supported file types: PDF, Word, Excel, PowerPoint, Text, and Images
+            </p>
+          </div>
+        ) : (
+          <div className="mb-4">
+            <div className="card">
+              <div className="card-body">
+                <div className="d-flex justify-content-between align-items-center">
+                  <div className="d-flex align-items-center">
+                    <FileText size={24} className="text-primary me-3" />
+                    <div>
+                      <h6 className="mb-0">{file.name}</h6>
+                      <p className="text-muted small mb-0">
+                        {(file.size / 1024).toFixed(2)} KB • {file.type || "Unknown type"}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={removeFile}
+                    className="btn btn-sm btn-outline-danger d-flex align-items-center"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="mb-3 mt-4">
+              <label htmlFor="description" className="form-label">
+                Description (optional)
+              </label>
+              <textarea
+                id="description"
+                className="form-control"
+                rows={3}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Add a description for your document..."
+              ></textarea>
+            </div>
+
+            <div className="d-flex justify-content-end gap-2">
+              <button type="button" onClick={removeFile} className="btn btn-outline-secondary" disabled={uploading}>
+                Cancel
+              </button>
+              <button type="submit" className="btn btn-primary" disabled={uploading}>
+                {uploading ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    Uploading...
+                  </>
+                ) : (
+                  "Upload Document"
+                )}
+              </button>
+            </div>
+          </div>
+        )}
       </form>
     </div>
-  );
+  )
 }
+

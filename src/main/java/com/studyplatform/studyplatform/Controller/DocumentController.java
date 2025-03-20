@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,116 +28,222 @@ import com.studyplatform.studyplatform.Service.UserService;
 @RequestMapping("/api/documents")
 public class DocumentController {
 
-    @Autowired
-    private DocumentService documentService;
-    
-    @Autowired
-    private FileStorageService fileStorageService;
-    
-    @Autowired
-    private UserService userService;
-    
-    @GetMapping
-    public ResponseEntity<List<Document>> getUserDocuments() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String email = auth.getName();
-        User user = userService.getUserByEmail(email);
-        
-        List<Document> documents = documentService.getDocumentsByUser(user.getId());
-        return ResponseEntity.ok(documents);
-    }
-    
-    @GetMapping("/stats")
-    public ResponseEntity<Map<String, Integer>> getDocumentStats() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String email = auth.getName();
-        User user = userService.getUserByEmail(email);
-        
-        Map<String, Integer> stats = documentService.getDocumentStatsByUser(user.getId());
-        return ResponseEntity.ok(stats);
-    }
-    
-    @PostMapping
-    public ResponseEntity<?> uploadDocument(
-            @RequestParam("file") MultipartFile file,
-            @RequestParam(value = "description", required = false) String description) {
-        
-        try {
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            String email = auth.getName();
-            User user = userService.getUserByEmail(email);
-            
-            // Store the file
-            String fileUrl = fileStorageService.storeFile(file);
-            
-            // Create document record
-            Document document = new Document();
-            document.setName(file.getOriginalFilename());
-            document.setFileUrl(fileUrl);
-            document.setFileType(file.getContentType());
-            document.setFileSize(file.getSize());
-            document.setDescription(description);
-            document.setUser(user);
-            
-            Document savedDocument = documentService.saveDocument(document);
-            
-            return ResponseEntity.ok(savedDocument);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
-    
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteDocument(@PathVariable Long id) {
-        try {
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            String email = auth.getName();
-            User user = userService.getUserByEmail(email);
-            
-            Document document = documentService.getDocumentById(id);
-            
-            // Check if document belongs to user
-            if (document.getUser().getId() != user.getId()) {
-                return ResponseEntity.status(403).body("You don't have permission to delete this document");
-            }
-            
-            // Delete file from storage
-            fileStorageService.deleteFile(document.getFileUrl());
-            
-            // Delete document record
-            documentService.deleteDocument(id);
-            
-            return ResponseEntity.ok().build();
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
-    
-    @GetMapping("/{id}/download")
-    public ResponseEntity<?> downloadDocument(@PathVariable Long id) {
-        try {
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            String email = auth.getName();
-            User user = userService.getUserByEmail(email);
-            
-            Document document = documentService.getDocumentById(id);
-            
-            // Check if document belongs to user
-            if (document.getUser().getId() != user.getId()) {
-                return ResponseEntity.status(403).body("You don't have permission to access this document");
-            }
-            
-            // Extract filename from URL
-            String fileName = document.getFileUrl().substring(document.getFileUrl().lastIndexOf("/") + 1);
-            
-            // Return the file URL or redirect to the file controller
-            Map<String, String> response = new HashMap<>();
-            response.put("url", "/api/files/" + fileName);
-            
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
+  @Autowired
+  private DocumentService documentService;
+  
+  @Autowired
+  private FileStorageService fileStorageService;
+  
+  @Autowired
+  private UserService userService;
+  
+  @GetMapping("/test")
+  public ResponseEntity<String> testEndpoint() {
+      return ResponseEntity.ok("DocumentController is working!");
+  }
+  
+  @GetMapping
+  public ResponseEntity<List<Document>> getUserDocuments() {
+      Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+      String email = auth.getName();
+      User user = userService.getUserByEmail(email);
+      
+      List<Document> documents = documentService.getDocumentsByUser(user.getId());
+      return ResponseEntity.ok(documents);
+  }
+  
+  @GetMapping("/stats")
+  public ResponseEntity<Map<String, Integer>> getDocumentStats() {
+      Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+      String email = auth.getName();
+      User user = userService.getUserByEmail(email);
+      
+      Map<String, Integer> stats = documentService.getDocumentStatsByUser(user.getId());
+      return ResponseEntity.ok(stats);
+  }
+  
+  @GetMapping("/{documentId}")
+  public ResponseEntity<?> getDocumentById(@PathVariable("documentId") Long documentId) {
+      try {
+          Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+          String email = auth.getName();
+          User user = userService.getUserByEmail(email);
+      
+          Document document = documentService.getDocumentById(documentId);
+      
+          // Check if document is accessible to the user
+          if (!document.getUser().getId().equals(user.getId()) && !document.isPublic()) {
+              return ResponseEntity.status(403).body("You don't have permission to access this document");
+          }
+      
+          return ResponseEntity.ok(document);
+      } catch (Exception e) {
+          return ResponseEntity.badRequest().body(e.getMessage());
+      }
+  }
+  
+  @PostMapping
+  public ResponseEntity<?> uploadDocument(
+          @RequestParam("file") MultipartFile file,
+          @RequestParam(value = "description", required = false) String description,
+          @RequestParam(value = "isPublic", required = false, defaultValue = "false") boolean isPublic) {
+      
+      try {
+          Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+          String email = auth.getName();
+          User user = userService.getUserByEmail(email);
+          
+          // Log the received isPublic value
+          System.out.println("Received isPublic value: " + isPublic);
+          
+          // Store the file
+          String fileUrl = fileStorageService.storeFile(file);
+          
+          // Create document record
+          Document document = new Document();
+          document.setName(file.getOriginalFilename());
+          document.setFileUrl(fileUrl);
+          document.setFileType(file.getContentType());
+          document.setFileSize(file.getSize());
+          document.setDescription(description);
+          document.setPublic(isPublic); // Set the public flag
+          document.setUser(user);
+          
+          Document savedDocument = documentService.saveDocument(document);
+          
+          return ResponseEntity.ok(savedDocument);
+      } catch (Exception e) {
+          return ResponseEntity.badRequest().body(e.getMessage());
+      }
+  }
+  
+  @PutMapping("/{id}/visibility")
+  public ResponseEntity<?> updateDocumentVisibility(
+          @PathVariable Long id,
+          @RequestParam("isPublic") boolean isPublic) {
+      try {
+          Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+          String email = auth.getName();
+          User user = userService.getUserByEmail(email);
+          
+          Document document = documentService.getDocumentById(id);
+          
+          // Check if document belongs to user
+          if (!document.getUser().getId().equals(user.getId())) {
+              return ResponseEntity.status(403).body("You don't have permission to modify this document");
+          }
+          
+          document.setPublic(isPublic);
+          Document updatedDocument = documentService.saveDocument(document);
+          
+          return ResponseEntity.ok(updatedDocument);
+      } catch (Exception e) {
+          return ResponseEntity.badRequest().body(e.getMessage());
+      }
+  }
+  
+  @DeleteMapping("/{id}")
+  public ResponseEntity<?> deleteDocument(@PathVariable Long id) {
+      try {
+          Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+          String email = auth.getName();
+          User user = userService.getUserByEmail(email);
+          
+          Document document = documentService.getDocumentById(id);
+          
+          // Check if document belongs to user
+          if (!document.getUser().getId().equals(user.getId())) {
+              return ResponseEntity.status(403).body("You don't have permission to delete this document");
+          }
+          
+          // Delete file from storage
+          fileStorageService.deleteFile(document.getFileUrl());
+          
+          // Delete document record
+          documentService.deleteDocument(id);
+          
+          return ResponseEntity.ok().build();
+      } catch (Exception e) {
+          return ResponseEntity.badRequest().body(e.getMessage());
+      }
+  }
+  
+  @GetMapping("/{id}/download")
+  public ResponseEntity<?> downloadDocument(@PathVariable Long id) {
+      try {
+          Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+          String email = auth.getName();
+          User user = userService.getUserByEmail(email);
+          
+          Document document = documentService.getDocumentById(id);
+          
+          // Check if document belongs to user or is public
+          if (!document.getUser().getId().equals(user.getId()) && !document.isPublic()) {
+              return ResponseEntity.status(403).body("You don't have permission to access this document");
+          }
+          
+          // Extract filename from URL
+          String fileName = document.getFileUrl().substring(document.getFileUrl().lastIndexOf("/") + 1);
+          
+          // Return the file URL or redirect to the file controller
+          Map<String, String> response = new HashMap<>();
+          response.put("url", "/api/files/" + fileName);
+          
+          return ResponseEntity.ok(response);
+      } catch (Exception e) {
+          return ResponseEntity.badRequest().body(e.getMessage());
+      }
+  }
+
+  @GetMapping("/search")
+  public ResponseEntity<List<Document>> searchDocuments(@RequestParam("q") String query) {
+      try {
+          Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+          // Only return documents that are public or belong to the current user
+          String email = auth.getName();
+          User user = userService.getUserByEmail(email);
+          
+          List<Document> documents = documentService.searchDocuments(query);
+          // Filter to only include public documents or documents owned by the current user
+          documents.removeIf(doc -> !doc.isPublic() && !doc.getUser().getId().equals(user.getId()));
+          
+          return ResponseEntity.ok(documents);
+      } catch (Exception e) {
+          // Return an empty list instead of null
+          return ResponseEntity.ok(java.util.Collections.emptyList());
+      }
+  }
+
+  @GetMapping("/public")
+  public ResponseEntity<List<Document>> getPublicDocuments() {
+      try {
+          List<Document> documents = documentService.getPublicDocuments();
+          return ResponseEntity.ok(documents);
+      } catch (Exception e) {
+          // Return an empty list instead of null
+          return ResponseEntity.ok(java.util.Collections.emptyList());
+      }
+  }
+
+  @GetMapping("/{id}/activity")
+  public ResponseEntity<?> getDocumentActivity(@PathVariable Long id) {
+      try {
+          Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+          String email = auth.getName();
+          User user = userService.getUserByEmail(email);
+      
+          Document document = documentService.getDocumentById(id);
+      
+          // Check if document is accessible to the user
+          if (!document.getUser().getId().equals(user.getId()) && !document.isPublic()) {
+              return ResponseEntity.status(403).body("You don't have permission to access this document");
+          }
+      
+          Map<String, Object> activityStats = documentService.getDocumentActivityStats(id);
+          return ResponseEntity.ok(activityStats);
+      } catch (Exception e) {
+          return ResponseEntity.badRequest().body(e.getMessage());
+      }
+  }
 }
 

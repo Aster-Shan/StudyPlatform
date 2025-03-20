@@ -24,58 +24,63 @@ import com.studyplatform.studyplatform.Service.CustomUserDetailsService;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Autowired
-    private CustomUserDetailsService userDetailsService;
-    
-    @Autowired
-    private JwtAuthenticationFilter jwtAuthenticationFilter;
-    
-    @Autowired
-    private OAuth2SuccessHandler oAuth2SuccessHandler;
+  @Autowired
+  private CustomUserDetailsService userDetailsService;
+  
+  @Autowired
+  private JwtAuthenticationFilter jwtAuthenticationFilter;
+  
+  @Autowired
+  private OAuth2SuccessHandler oAuth2SuccessHandler;
 
-    @Bean
-public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-    http
-        .cors().and()
-        .csrf().disable()
-        .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-        .and()
-        .authorizeHttpRequests()
-            .antMatchers(
-                "/api/auth/**", 
-                "/api/users/reset-password", // Explicitly permit this endpoint
-                "/oauth2/**",
-                "/login/oauth2/code/*"
-            ).permitAll()
-            .anyRequest().authenticated()
-        .and()
-        .oauth2Login()
-            .successHandler(oAuth2SuccessHandler)
-        .and()
-        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-        
-    return http.build();
-}
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
-        return authConfig.getAuthenticationManager();
-    }
+  @Bean
+  public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+      http
+          .cors().and()
+          .csrf().disable()
+          .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+          .and()
+          .authorizeHttpRequests()
+              .antMatchers(
+                  "/api/auth/**", 
+                  "/api/users/reset-password", // Explicitly permit this endpoint
+                  "/oauth2/**",
+                  "/login/oauth2/code/*"
+              ).permitAll()
+              .antMatchers("/api/documents/**").authenticated() // Documents endpoints
+              .antMatchers("/api/comments/**").authenticated() // Comments endpoints
+              .antMatchers("/api/files/**").authenticated() // Files endpoints
+              .anyRequest().authenticated()
+          .and()
+          .oauth2Login()
+              .successHandler(oAuth2SuccessHandler)
+          .and()
+          .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+          
+      return http.build();
+  }
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-    
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
-        configuration.setAllowCredentials(true);
-        
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
-    }
+  @Bean
+  public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
+      return authConfig.getAuthenticationManager();
+  }
+
+  @Bean
+  public PasswordEncoder passwordEncoder() {
+      return new BCryptPasswordEncoder();
+  }
+  
+  @Bean
+  public CorsConfigurationSource corsConfigurationSource() {
+      CorsConfiguration configuration = new CorsConfiguration();
+      configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000"));
+      configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+      configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
+      configuration.setAllowCredentials(true);
+      
+      UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+      source.registerCorsConfiguration("/**", configuration);
+      return source;
+  }
 }
+

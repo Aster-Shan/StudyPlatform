@@ -152,7 +152,6 @@ export default function Home() {
                     <h5 className="mb-0 text-white">{user.firstName} {user.lastName}</h5>
                     <p className="mb-1 small text-white text-opacity-75">{user.email}</p>
                     <div className="d-flex align-items-center">
-                      <span className="badge bg-light text-dark me-2">Premium</span>
                       <span className="badge bg-success">Verified</span>
                     </div>
                   </div>
