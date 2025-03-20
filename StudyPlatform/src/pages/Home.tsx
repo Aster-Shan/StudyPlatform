@@ -1,11 +1,13 @@
-import { Bell, Calendar, ChevronRight, FileText, LogOut, Settings, Shield, User } from 'lucide-react';
-import React from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Bell, ChevronRight, FileText, HomeIcon, LogOut, Menu, MessageSquare, Settings, Shield, User, Users, Video } from 'lucide-react';
+import React, { useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 
 export default function Home() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Function to handle logout
   const handleLogout = () => {
@@ -13,12 +15,16 @@ export default function Home() {
     navigate("/login");
   };
 
-  // Function to navigate to profile/settings
-  const goToProfile = () => {
-    navigate("/profile");
-  };
-  const goToDocuments = () => {
-    navigate("/documents");
+  // Functions to navigate
+  const goToProfile = () => navigate("/profile");
+  const goToDocuments = () => navigate("/documents");
+  const goToChat = () => navigate("/chat");
+  const goToForum = () => navigate("/forum");
+  const goToVideo = () => navigate("/video");
+
+  // Function to check if a path is active
+  const isActive = (path: string) => {
+    return location.pathname === path ? "active" : "";
   };
 
   if (!user) {
@@ -41,68 +47,249 @@ export default function Home() {
   }
 
   return (
-    <div className="min-vh-100 bg-light d-flex flex-column" >
-      {/* Custom Navbar */}
-      <header className="navbar navbar-light bg-white border-bottom">
-        <div className="container ms-2">
+    <div className="min-vh-100 bg-light d-flex flex-column">
+      {/* Enhanced Navbar */}
+      <header className="navbar navbar-expand-lg navbar-light bg-white border-bottom shadow-sm sticky-top">
+        <div className="container-fluid px-4">
+          {/* Mobile sidebar toggle */}
+          <button 
+            className="btn btn-link text-dark me-3 d-lg-none" 
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+          >
+            <Menu size={20} />
+          </button>
+          
           {/* Brand */}
-          <Link to="/" className="navbar-brand fw-bold">
-            UserManagement
+          <Link to="/" className="navbar-brand fw-bold me-auto me-lg-4">
+            StudyPlatform
           </Link>
 
-          {/* Nav links */}
-          <ul className="navbar-nav me-auto d-flex flex-row">
-            {user ? (
-              <>
-                <li className="nav-item me-3">
-                  <Link to="/" className="nav-link">
-                    Home
-                  </Link>
-                </li>
-                <li className="nav-item">
-                  <Link to="/documents" className="nav-link">
-                    Documents
-                  </Link>
-                </li>
-              </>
-            ) : (
-              <></>
-            )}
-          </ul>
+          {/* Collapsible navigation */}
+          <button 
+            className="navbar-toggler" 
+            type="button" 
+            data-bs-toggle="collapse" 
+            data-bs-target="#navbarContent"
+          >
+            <span className="navbar-toggler-icon"></span>
+          </button>
 
-          {/* Auth buttons or user info */}
-          {user ? (
+          <div className="collapse navbar-collapse" id="navbarContent">
+            {/* Main navigation links */}
+            <ul className="navbar-nav me-auto mb-2 mb-lg-0">
+              <li className="nav-item">
+                <Link to="/" className={`nav-link d-flex align-items-center ${isActive("/")}`}>
+                  <HomeIcon size={18} className="me-2 d-none d-sm-inline" />
+                  Home
+                </Link>
+              </li>
+              <li className="nav-item">
+                <Link to="/documents" className={`nav-link d-flex align-items-center ${isActive("/documents")}`}>
+                  <FileText size={18} className="me-2 d-none d-sm-inline" />
+                  Documents
+                </Link>
+              </li>
+              <li className="nav-item">
+                <Link to="/chat" className={`nav-link d-flex align-items-center ${isActive("/chat")}`}>
+                  <MessageSquare size={18} className="me-2 d-none d-sm-inline" />
+                  Chat
+                </Link>
+              </li>
+              <li className="nav-item">
+                <Link to="/forum" className={`nav-link d-flex align-items-center ${isActive("/forum")}`}>
+                  <Users size={18} className="me-2 d-none d-sm-inline" />
+                  Forum
+                </Link>
+              </li>
+              <li className="nav-item">
+                <Link to="/video" className={`nav-link d-flex align-items-center ${isActive("/video")}`}>
+                  <Video size={18} className="me-2 d-none d-sm-inline" />
+                  Video
+                </Link>
+              </li>
+            </ul>
+
+            {/* Right-aligned items */}
             <div className="d-flex align-items-center">
-              <div className="d-flex align-items-center me-3">
-                <div className="d-flex align-items-center justify-content-center bg-light rounded-circle me-2" style={{ width: "32px", height: "32px" }}>
-                  {user.profilePictureUrl ? (
-                    <img
-                      src={user.profilePictureUrl || "/placeholder.svg"}
-                      alt={user.firstName}
-                      className="rounded-circle w-100 h-100 object-fit-cover"
-                    />
-                  ) : (
-                    <span className="fw-medium text-secondary">
-                      {user.firstName?.charAt(0)}
-                      {user.lastName?.charAt(0)}
-                    </span>
-                  )}
-                </div>
-                <span className="d-none d-md-inline">{user.firstName}</span>
+              {/* Notifications */}
+              <div className="dropdown me-3">
+                <button 
+                  className="btn btn-light position-relative" 
+                  id="notificationsDropdown" 
+                  data-bs-toggle="dropdown" 
+                  aria-expanded="false"
+                >
+                  <Bell size={18} />
+                  <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                    2
+                  </span>
+                </button>
+                <ul className="dropdown-menu dropdown-menu-end shadow" aria-labelledby="notificationsDropdown" style={{minWidth: "300px"}}>
+                  <li><h6 className="dropdown-header">Notifications</h6></li>
+                  <li><hr className="dropdown-divider" /></li>
+                  <li>
+                    <a className="dropdown-item d-flex align-items-center py-2" href="#">
+                      <div className="rounded-circle bg-primary bg-opacity-10 p-2 me-3">
+                        <MessageSquare size={16} className="text-primary" />
+                      </div>
+                      <div>
+                        <p className="mb-0 small">New message from John Doe</p>
+                        <p className="text-muted mb-0 x-small">5 minutes ago</p>
+                      </div>
+                    </a>
+                  </li>
+                  <li>
+                    <a className="dropdown-item d-flex align-items-center py-2" href="#">
+                      <div className="rounded-circle bg-success bg-opacity-10 p-2 me-3">
+                        <FileText size={16} className="text-success" />
+                      </div>
+                      <div>
+                        <p className="mb-0 small">Document shared with you</p>
+                        <p className="text-muted mb-0 x-small">1 hour ago</p>
+                      </div>
+                    </a>
+                  </li>
+                  <li><hr className="dropdown-divider" /></li>
+                  <li>
+                    <a className="dropdown-item text-center small" href="#">
+                      View all notifications
+                    </a>
+                  </li>
+                </ul>
+              </div>
+
+              {/* User dropdown */}
+              <div className="dropdown">
+                <button 
+                  className="btn btn-link text-decoration-none text-dark dropdown-toggle d-flex align-items-center" 
+                  type="button" 
+                  id="userDropdown" 
+                  data-bs-toggle="dropdown" 
+                  aria-expanded="false"
+                >
+                  <div className="d-flex align-items-center justify-content-center bg-light rounded-circle me-2" style={{ width: "32px", height: "32px" }}>
+                    {user.profilePictureUrl ? (
+                      <img
+                        src={user.profilePictureUrl || "/placeholder.svg"}
+                        alt={user.firstName}
+                        className="rounded-circle w-100 h-100 object-fit-cover"
+                      />
+                    ) : (
+                      <span className="fw-medium text-secondary">
+                        {user.firstName?.charAt(0)}
+                        {user.lastName?.charAt(0)}
+                      </span>
+                    )}
+                  </div>
+                  <span className="d-none d-md-inline">{user.firstName}</span>
+                </button>
+                <ul className="dropdown-menu dropdown-menu-end shadow" aria-labelledby="userDropdown">
+                  <li>
+                    <button className="dropdown-item d-flex align-items-center" onClick={goToProfile}>
+                      <User size={16} className="me-2" />
+                      Profile
+                    </button>
+                  </li>
+                  <li>
+                    <button className="dropdown-item d-flex align-items-center" onClick={goToProfile}>
+                      <Settings size={16} className="me-2" />
+                      Settings
+                    </button>
+                  </li>
+                  <li><hr className="dropdown-divider" /></li>
+                  <li>
+                    <button className="dropdown-item d-flex align-items-center" onClick={handleLogout}>
+                      <LogOut size={16} className="me-2" />
+                      Logout
+                    </button>
+                  </li>
+                </ul>
               </div>
             </div>
-          ) : (
-            <div className="d-flex">
-              <Link to="/login" className="btn btn-outline-secondary me-2">
-                Log in
-              </Link>
-              <Link to="/register" className="btn btn-primary">
-                Sign up
-              </Link>
-            </div>
-          )}
+          </div>
         </div>
       </header>
+      
+      {/* Mobile Sidebar */}
+      <div className={`offcanvas offcanvas-start ${sidebarOpen ? 'show' : ''}`} tabIndex={-1} id="sidebar">
+        <div className="offcanvas-header border-bottom">
+          <h5 className="offcanvas-title">StudyPlatform</h5>
+          <button 
+            type="button" 
+            className="btn-close text-reset" 
+            onClick={() => setSidebarOpen(false)}
+          ></button>
+        </div>
+        <div className="offcanvas-body p-0">
+          <div className="list-group list-group-flush">
+            <Link 
+              to="/" 
+              className={`list-group-item list-group-item-action d-flex align-items-center ${isActive("/")}`}
+              onClick={() => setSidebarOpen(false)}
+            >
+              <HomeIcon size={18} className="me-3" />
+              Home
+            </Link>
+            <Link 
+              to="/documents" 
+              className={`list-group-item list-group-item-action d-flex align-items-center ${isActive("/documents")}`}
+              onClick={() => setSidebarOpen(false)}
+            >
+              <FileText size={18} className="me-3" />
+              Documents
+            </Link>
+            <Link 
+              to="/chat" 
+              className={`list-group-item list-group-item-action d-flex align-items-center ${isActive("/chat")}`}
+              onClick={() => setSidebarOpen(false)}
+            >
+              <MessageSquare size={18} className="me-3" />
+              Chat
+            </Link>
+            <Link 
+              to="/forum" 
+              className={`list-group-item list-group-item-action d-flex align-items-center ${isActive("/forum")}`}
+              onClick={() => setSidebarOpen(false)}
+            >
+              <Users size={18} className="me-3" />
+              Forum
+            </Link>
+            <Link 
+              to="/video" 
+              className={`list-group-item list-group-item-action d-flex align-items-center ${isActive("/video")}`}
+              onClick={() => setSidebarOpen(false)}
+            >
+              <Video size={18} className="me-3" />
+              Video Conferencing
+            </Link>
+            <hr className="my-2" />
+            <Link 
+              to="/profile" 
+              className={`list-group-item list-group-item-action d-flex align-items-center ${isActive("/profile")}`}
+              onClick={() => setSidebarOpen(false)}
+            >
+              <User size={18} className="me-3" />
+              Profile
+            </Link>
+            <button 
+              className="list-group-item list-group-item-action d-flex align-items-center text-danger"
+              onClick={handleLogout}
+            >
+              <LogOut size={18} className="me-3" />
+              Logout
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      {/* Backdrop for mobile sidebar */}
+      {sidebarOpen && (
+        <div 
+          className="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50" 
+          style={{zIndex: 1040}}
+          onClick={() => setSidebarOpen(false)}
+        ></div>
+      )}
       
       <div className="flex-grow-1">
         {/* Modern Header with Gradient */}
@@ -161,6 +348,15 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Breadcrumbs */}
+        <nav aria-label="breadcrumb" className="bg-white border-bottom py-2">
+          <div className="container px-4">
+            <ol className="breadcrumb mb-0 py-1">
+              <li className="breadcrumb-item active" aria-current="page">Home</li>
+            </ol>
+          </div>
+        </nav>
+
         {/* Quick Actions Bar */}
         <div className="bg-white border-bottom shadow-sm py-3">
           <div className="container px-4">
@@ -170,35 +366,30 @@ export default function Home() {
                   <div className="d-flex align-items-center mb-2 mb-md-0">
                     <span className="text-muted me-3">Quick Actions:</span>
                     <div className="btn-group">
-                    <button 
+                      <button 
                         className="btn btn-sm btn-outline-secondary d-flex align-items-center"
                         onClick={goToDocuments}
                       >
                         <FileText size={16} className="me-2" />
                         New Document
                       </button>
-                      <button className="btn btn-sm btn-outline-secondary d-flex align-items-center">
-                        <Calendar size={16} className="me-2" />
-                        Schedule
-                      </button>
-                      {/* Added onClick handler to actually log out */}
                       <button 
                         className="btn btn-sm btn-outline-secondary d-flex align-items-center"
-                        onClick={handleLogout}
+                        onClick={goToChat}
                       >
-                        <LogOut size={16} className="me-2" />
-                        Log Out
+                        <MessageSquare size={16} className="me-2" />
+                        New Chat
+                      </button>
+                      <button 
+                        className="btn btn-sm btn-outline-secondary d-flex align-items-center"
+                        onClick={goToVideo}
+                      >
+                        <Video size={16} className="me-2" />
+                        Start Meeting
                       </button>
                     </div>
                   </div>
                   <div className="d-flex align-items-center">
-                    <button className="btn btn-sm btn-light position-relative me-3">
-                      <Bell size={18} />
-                      <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                        2
-                      </span>
-                    </button>
-                    {/* Added onClick handler to navigate to profile */}
                     <button 
                       className="btn btn-sm btn-primary d-flex align-items-center"
                       onClick={goToProfile}
@@ -215,6 +406,77 @@ export default function Home() {
 
         {/* Main Content */}
         <div className="container px-4 py-4">
+          {/* Feature Cards */}
+          <div className="row g-4 mb-4">
+            <div className="col-md-6 col-lg-3">
+              <div className="card border-0 shadow-sm h-100">
+                <div className="card-body p-4 text-center">
+                  <div className="rounded-circle bg-primary bg-opacity-10 p-3 d-inline-flex mb-3">
+                    <MessageSquare size={32} className="text-primary" />
+                  </div>
+                  <h5 className="card-title">Chat</h5>
+                  <p className="card-text text-muted">
+                    Connect with other students and teachers through instant messaging.
+                  </p>
+                  <button onClick={goToChat} className="btn btn-outline-primary mt-2">
+                    Open Chat
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <div className="col-md-6 col-lg-3">
+              <div className="card border-0 shadow-sm h-100">
+                <div className="card-body p-4 text-center">
+                  <div className="rounded-circle bg-success bg-opacity-10 p-3 d-inline-flex mb-3">
+                    <Video size={32} className="text-success" />
+                  </div>
+                  <h5 className="card-title">Video</h5>
+                  <p className="card-text text-muted">
+                    Join or create video meetings for real-time collaboration.
+                  </p>
+                  <button onClick={goToVideo} className="btn btn-outline-success mt-2">
+                    Start Video
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <div className="col-md-6 col-lg-3">
+              <div className="card border-0 shadow-sm h-100">
+                <div className="card-body p-4 text-center">
+                  <div className="rounded-circle bg-info bg-opacity-10 p-3 d-inline-flex mb-3">
+                    <Users size={32} className="text-info" />
+                  </div>
+                  <h5 className="card-title">Forum</h5>
+                  <p className="card-text text-muted">
+                    Discuss topics, ask questions, and share knowledge with the community.
+                  </p>
+                  <button onClick={goToForum} className="btn btn-outline-info mt-2">
+                    Browse Forum
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <div className="col-md-6 col-lg-3">
+              <div className="card border-0 shadow-sm h-100">
+                <div className="card-body p-4 text-center">
+                  <div className="rounded-circle bg-warning bg-opacity-10 p-3 d-inline-flex mb-3">
+                    <FileText size={32} className="text-warning" />
+                  </div>
+                  <h5 className="card-title">Documents</h5>
+                  <p className="card-text text-muted">
+                    Access and manage your study materials and resources.
+                  </p>
+                  <button onClick={goToDocuments} className="btn btn-outline-warning mt-2">
+                    View Documents
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Overview Stats */}
           <div className="row g-4 mb-4">
             <div className="col-md-4">
@@ -310,7 +572,6 @@ export default function Home() {
                   )}
                 </div>
                 <div className="card-footer bg-white border-top-0 text-end">
-                  {/* Added onClick handler to navigate to profile */}
                   <button 
                     className="btn btn-link text-decoration-none p-0"
                     onClick={goToProfile}
@@ -352,7 +613,6 @@ export default function Home() {
                   )}
                 </div>
                 <div className="card-footer bg-white border-top-0 text-end">
-                  {/* Added onClick handler to navigate to profile */}
                   <button 
                     className="btn btn-link text-decoration-none p-0"
                     onClick={goToProfile}
@@ -416,7 +676,6 @@ export default function Home() {
                   </div>
                 </div>
                 <div className="card-footer bg-white border-top-0 text-end">
-                  {/* Added onClick handler to navigate to profile */}
                   <button 
                     className="btn btn-link text-decoration-none p-0"
                     onClick={goToProfile}
@@ -443,7 +702,6 @@ export default function Home() {
                       <div className="progress mb-3" style={{ height: "8px" }}>
                         <div className="progress-bar bg-primary" role="progressbar" style={{ width: "60%" }} aria-valuenow={60} aria-valuemin={0} aria-valuemax={100}></div>
                       </div>
-                      {/* Added onClick handler to navigate to profile */}
                       <button 
                         className="btn btn-primary"
                         onClick={goToProfile}
@@ -481,7 +739,7 @@ export default function Home() {
         <div className="container px-4">
           <div className="row align-items-center">
             <div className="col-md-6 text-center text-md-start">
-              <p className="mb-0 text-muted small">© 2023 UserManagement. All rights reserved.</p>
+              <p className="mb-0 text-muted small">© 2023 StudyPlatform. All rights reserved.</p>
             </div>
             <div className="col-md-6 text-center text-md-end">
               <ul className="list-inline mb-0">

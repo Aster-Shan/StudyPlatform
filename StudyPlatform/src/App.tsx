@@ -5,16 +5,20 @@ import React, { useEffect } from "react"
 import { Route, BrowserRouter as Router, Routes } from "react-router-dom"
 import ProtectedRoute from "./components/ProtectedRoute"
 import { AuthProvider } from "./contexts/AuthContext"
+import Chat from "./pages/Chat"
 import DocumentDetail from "./pages/DocumentDetail"
 import Documents from "./pages/Documents"
 import EmailConfirmation from "./pages/EmailConfirmation"
 import ForgotPassword from "./pages/ForgotPassword"
+import Forum from "./pages/Forum"
+import ForumTopic from "./pages/ForumTopic"
 import Home from "./pages/Home"
 import Login from "./pages/Login"
 import Profile from "./pages/Profile"
 import Register from "./pages/Register"
 import ResetPassword from "./pages/ResetPassword"
 import Setup2FA from "./pages/Setup2FA"
+import VideoConferencing from "./pages/VideoConferencing"
 
 function App() {
   useEffect(() => {
@@ -72,6 +76,38 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <DocumentDetail />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/chat/*"
+                element={
+                  <ProtectedRoute>
+                    <Chat />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/forum"
+                element={
+                  <ProtectedRoute>
+                    <Forum />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/forum/topic/:id"
+                element={
+                  <ProtectedRoute>
+                    <ForumTopic />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/video/*"
+                element={
+                  <ProtectedRoute>
+                    <VideoConferencing />
                   </ProtectedRoute>
                 }
               />

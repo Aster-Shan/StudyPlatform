@@ -177,5 +177,8 @@ private IEmailService emailService;
             
             return true;
         }
-        
+        public User getUserById(Long id) {
+            return userRepository.findById(id)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with id: " + id));
+        }
 }
