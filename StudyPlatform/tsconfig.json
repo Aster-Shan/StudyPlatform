@@ -4,7 +4,7 @@
     "forceConsistentCasingInFileNames": true,  // Enforces consistent casing in file names
     "strict": true,  // Enables strict type-checking options
     "target": "ES2022",  // Target ECMAScript version
-    "lib": ["ES2022"],  // Use ES2022 libraries
+   // "lib": ["ES2022"],  // Use ES2022 libraries
     "lib": ["dom", "esnext"],
     "module": "ESNext",  // Use the latest module system
     "skipLibCheck": true,  // Skip type checking of declaration files

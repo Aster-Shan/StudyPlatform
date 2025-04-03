@@ -18,6 +18,8 @@ import io.jsonwebtoken.UnsupportedJwtException;
 @Component
 public class JwtTokenProvider {
 
+
+
     @Value("${app.jwt.secret}")
     private String jwtSecret;
 

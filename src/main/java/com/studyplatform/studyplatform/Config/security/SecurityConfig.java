@@ -40,18 +40,18 @@ public class SecurityConfig {
           .csrf().disable()
           .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
           .and()
-          .authorizeHttpRequests()
+          .authorizeHttpRequests(authorize -> authorize
               .antMatchers(
                   "/api/auth/**", 
                   "/api/users/reset-password", // Explicitly permit this endpoint
                   "/oauth2/**",
-                  "/login/oauth2/code/*"
+                  "/login/oauth2/code/*",
+                  "/api/files/**" // Allow anonymous access to files
               ).permitAll()
               .antMatchers("/api/documents/**").authenticated() // Documents endpoints
               .antMatchers("/api/comments/**").authenticated() // Comments endpoints
-              .antMatchers("/api/files/**").authenticated() // Files endpoints
               .anyRequest().authenticated()
-          .and()
+          )
           .oauth2Login()
               .successHandler(oAuth2SuccessHandler)
           .and()
@@ -75,7 +75,7 @@ public class SecurityConfig {
       CorsConfiguration configuration = new CorsConfiguration();
       configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000"));
       configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-      configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
+      configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With"));
       configuration.setAllowCredentials(true);
       
       UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

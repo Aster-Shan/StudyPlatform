@@ -1,94 +1,97 @@
-import { AlertCircle, LogOut, Upload } from 'lucide-react';
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
-import api from "../services/api";
+"use client"
+
+import { AlertCircle, LogOut, Upload } from "lucide-react"
+import React, { useState } from "react"
+import { Link, useNavigate } from "react-router-dom"
+import ProfileImage from "../components/ProfileImage"
+import { useAuth } from "../contexts/AuthContext"
+import api from "../services/api"
 
 export default function Profile() {
-  const { user, updateUser, logout } = useAuth();
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [activeTab, setActiveTab] = useState("general");
+  const { user, updateUser, logout } = useAuth()
+  const navigate = useNavigate()
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
+  const [success, setSuccess] = useState("")
+  const [activeTab, setActiveTab] = useState("general")
   const [formData, setFormData] = useState({
     firstName: user?.firstName || "",
     lastName: user?.lastName || "",
     bio: user?.bio || "",
     academicInterests: user?.academicInterests?.join(", ") || "",
-  });
-  const [uploadingImage, setUploadingImage] = useState(false);
+  })
+  const [uploadingImage, setUploadingImage] = useState(false)
 
   const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
+    logout()
+    navigate("/login")
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+    const { name, value } = e.target
+    setFormData((prev) => ({ ...prev, [name]: value }))
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setSuccess("");
-    setLoading(true);
+    e.preventDefault()
+    setError("")
+    setSuccess("")
+    setLoading(true)
 
     try {
       const academicInterests = formData.academicInterests
         .split(",")
         .map((interest) => interest.trim())
-        .filter((interest) => interest !== "");
+        .filter((interest) => interest !== "")
 
       const response = await api.put("/api/users/profile", {
         firstName: formData.firstName,
         lastName: formData.lastName,
         bio: formData.bio,
         academicInterests,
-      });
+      })
 
-      updateUser(response.data);
-      setSuccess("Profile updated successfully");
+      updateUser(response.data)
+      setSuccess("Profile updated successfully")
     } catch (err: unknown) {
       if (err instanceof Error) {
-        setError(err.message || 'Failed to update profile');
+        setError(err.message || "Failed to update profile")
       } else {
-        setError('Failed to update profile');
+        setError("Failed to update profile")
       }
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const file = e.target.files?.[0]
+    if (!file) return
 
-    setUploadingImage(true);
-    setError("");
+    setUploadingImage(true)
+    setError("")
 
-    const formData = new FormData();
-    formData.append("file", file);
+    const formData = new FormData()
+    formData.append("file", file)
 
     try {
       const response = await api.post("/api/users/profile/picture", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      });
+      })
 
-      updateUser({ profilePictureUrl: response.data });
+      updateUser({ profilePictureUrl: response.data })
     } catch (err: unknown) {
       if (err instanceof Error) {
-        setError(err.message || 'Failed to upload image');
+        setError(err.message || "Failed to upload image")
       } else {
-        setError('Failed to upload image');
+        setError("Failed to upload image")
       }
     } finally {
-      setUploadingImage(false);
+      setUploadingImage(false)
     }
-  };
+  }
 
   if (!user) {
     return (
@@ -97,17 +100,17 @@ export default function Profile() {
           <span className="visually-hidden">Loading...</span>
         </div>
       </div>
-    );
+    )
   }
 
   return (
-    <div className="min-vh-100 bg-light d-flex flex-column">
+    <div className="min-vh-100 bg-light d-flex flex-column w-100">
       {/* Custom Navbar */}
-      <header className="navbar navbar-light bg-white border-bottom">
-        <div className="container ms-2">
+      <header className="navbar navbar-light bg-white border-bottom shadow-sm sticky-top w-100">
+        <div className="container-fluid px-4 w-100">
           {/* Brand */}
-          <Link to="/" className="navbar-brand fw-bold">
-            UserManagement
+          <Link to="/" className="navbar-brand fw-bold me-auto me-lg-4">
+            StudyPlatform
           </Link>
 
           {/* Nav links */}
@@ -139,26 +142,15 @@ export default function Profile() {
           {user ? (
             <div className="d-flex align-items-center">
               <div className="d-flex align-items-center me-3">
-                <div className="d-flex align-items-center justify-content-center bg-light rounded-circle me-2" style={{ width: "32px", height: "32px" }}>
-                  {user.profilePictureUrl ? (
-                    <img
-                      src={user.profilePictureUrl || "/placeholder.svg"}
-                      alt={user.firstName}
-                      className="rounded-circle w-100 h-100 object-fit-cover"
-                    />
-                  ) : (
-                    <span className="fw-medium text-secondary">
-                      {user.firstName?.charAt(0)}
-                      {user.lastName?.charAt(0)}
-                    </span>
-                  )}
-                </div>
+                <ProfileImage
+                  src={user.profilePictureUrl}
+                  alt={`${user.firstName} ${user.lastName}`}
+                  size={32}
+                  className="me-2"
+                />
                 <span className="d-none d-md-inline">{user.firstName}</span>
               </div>
-              <button 
-                className="btn btn-outline-danger btn-sm d-flex align-items-center"
-                onClick={handleLogout}
-              >
+              <button className="btn btn-outline-danger btn-sm d-flex align-items-center" onClick={handleLogout}>
                 <LogOut size={16} className="me-2" />
                 <span className="d-none d-md-inline">Logout</span>
               </button>
@@ -175,15 +167,17 @@ export default function Profile() {
           )}
         </div>
       </header>
-      
-      <div className="flex-grow-1">
+
+      <div className="flex-grow-1 w-100">
         {/* Header with Gradient */}
-        <div className="w-100 text-white py-4" 
-             style={{ 
-               background: "linear-gradient(135deg, #000000 0%, #2c3e50 100%)",
-               borderBottom: "1px solid rgba(255,255,255,0.1)"
-             }}>
-          <div className="container px-4">
+        <div
+          className="w-100 text-white py-4"
+          style={{
+            background: "linear-gradient(135deg, #000000 0%, #2c3e50 100%)",
+            borderBottom: "1px solid rgba(255,255,255,0.1)",
+          }}
+        >
+          <div className="container-fluid px-4 w-100">
             <div className="row align-items-center">
               <div className="col-lg-8">
                 <h1 className="display-5 fw-bold mb-1">Profile Settings</h1>
@@ -193,20 +187,20 @@ export default function Profile() {
           </div>
         </div>
 
-        <div className="container px-4 py-4">
+        <div className="container-fluid px-4 py-4 w-100">
           {/* Tabs */}
           <ul className="nav nav-tabs mb-4">
             <li className="nav-item">
-              <button 
-                className={`nav-link ${activeTab === "general" ? "active" : ""}`} 
+              <button
+                className={`nav-link ${activeTab === "general" ? "active" : ""}`}
                 onClick={() => setActiveTab("general")}
               >
                 General
               </button>
             </li>
             <li className="nav-item">
-              <button 
-                className={`nav-link ${activeTab === "security" ? "active" : ""}`} 
+              <button
+                className={`nav-link ${activeTab === "security" ? "active" : ""}`}
                 onClick={() => setActiveTab("security")}
               >
                 Security
@@ -239,26 +233,21 @@ export default function Profile() {
                   </div>
                   <div className="card-body d-flex flex-column align-items-center">
                     <div className="mb-4 position-relative">
-                      {user.profilePictureUrl ? (
-                        <img
-                          src={user.profilePictureUrl || "/placeholder.svg"}
-                          alt={user.firstName}
-                          className="rounded-circle"
-                          style={{ width: "120px", height: "120px", objectFit: "cover" }}
-                        />
-                      ) : (
-                        <div className="rounded-circle bg-primary d-flex align-items-center justify-content-center" 
-                             style={{ width: "120px", height: "120px" }}>
-                          <span className="fs-1 text-white">
-                            {user.firstName?.charAt(0)}
-                            {user.lastName?.charAt(0)}
-                          </span>
-                        </div>
-                      )}
+                      <ProfileImage
+                        src={user.profilePictureUrl}
+                        alt={`${user.firstName} ${user.lastName}`}
+                        size={120}
+                      />
                     </div>
-                    
+
                     <div className="w-100">
-                      <input id="picture" type="file" accept="image/*" className="d-none" onChange={handleImageUpload} />
+                      <input
+                        id="picture"
+                        type="file"
+                        accept="image/*"
+                        className="d-none"
+                        onChange={handleImageUpload}
+                      />
                       <button
                         className="btn btn-outline-primary w-100 d-flex align-items-center justify-content-center"
                         onClick={() => document.getElementById("picture")?.click()}
@@ -283,7 +272,9 @@ export default function Profile() {
                     <form id="profile-form" onSubmit={handleSubmit}>
                       <div className="row mb-3">
                         <div className="col-md-6 mb-3 mb-md-0">
-                          <label htmlFor="firstName" className="form-label">First Name</label>
+                          <label htmlFor="firstName" className="form-label">
+                            First Name
+                          </label>
                           <input
                             type="text"
                             className="form-control"
@@ -294,7 +285,9 @@ export default function Profile() {
                           />
                         </div>
                         <div className="col-md-6">
-                          <label htmlFor="lastName" className="form-label">Last Name</label>
+                          <label htmlFor="lastName" className="form-label">
+                            Last Name
+                          </label>
                           <input
                             type="text"
                             className="form-control"
@@ -307,18 +300,16 @@ export default function Profile() {
                       </div>
 
                       <div className="mb-3">
-                        <label htmlFor="email" className="form-label">Email</label>
-                        <input
-                          type="email"
-                          className="form-control bg-light"
-                          id="email"
-                          value={user.email}
-                          disabled
-                        />
+                        <label htmlFor="email" className="form-label">
+                          Email
+                        </label>
+                        <input type="email" className="form-control bg-light" id="email" value={user.email} disabled />
                       </div>
 
                       <div className="mb-3">
-                        <label htmlFor="bio" className="form-label">Bio</label>
+                        <label htmlFor="bio" className="form-label">
+                          Bio
+                        </label>
                         <textarea
                           className="form-control"
                           id="bio"
@@ -347,12 +338,7 @@ export default function Profile() {
                     </form>
                   </div>
                   <div className="card-footer bg-white border-top-0 text-end">
-                    <button
-                      type="submit"
-                      form="profile-form"
-                      className="btn btn-primary"
-                      disabled={loading}
-                    >
+                    <button type="submit" form="profile-form" className="btn btn-primary" disabled={loading}>
                       {loading ? "Saving..." : "Save Changes"}
                     </button>
                   </div>
@@ -406,15 +392,21 @@ export default function Profile() {
                   <div className="card-body">
                     <form>
                       <div className="mb-3">
-                        <label htmlFor="currentPassword" className="form-label">Current Password</label>
+                        <label htmlFor="currentPassword" className="form-label">
+                          Current Password
+                        </label>
                         <input type="password" className="form-control" id="currentPassword" />
                       </div>
                       <div className="mb-3">
-                        <label htmlFor="newPassword" className="form-label">New Password</label>
+                        <label htmlFor="newPassword" className="form-label">
+                          New Password
+                        </label>
                         <input type="password" className="form-control" id="newPassword" />
                       </div>
                       <div className="mb-3">
-                        <label htmlFor="confirmPassword" className="form-label">Confirm New Password</label>
+                        <label htmlFor="confirmPassword" className="form-label">
+                          Confirm New Password
+                        </label>
                         <input type="password" className="form-control" id="confirmPassword" />
                       </div>
                     </form>
@@ -436,18 +428,18 @@ export default function Profile() {
                     <div className="mb-4">
                       <h6 className="mb-2">Security Score</h6>
                       <div className="progress" style={{ height: "8px" }}>
-                        <div 
-                          className="progress-bar bg-primary" 
-                          role="progressbar" 
-                          style={{ width: user.using2FA ? "100%" : "75%" }} 
-                          aria-valuenow={user.using2FA ? 100 : 75} 
-                          aria-valuemin={0} 
+                        <div
+                          className="progress-bar bg-primary"
+                          role="progressbar"
+                          style={{ width: user.using2FA ? "100%" : "75%" }}
+                          aria-valuenow={user.using2FA ? 100 : 75}
+                          aria-valuemin={0}
                           aria-valuemax={100}
                         ></div>
                       </div>
                       <p className="text-muted small mt-2">
-                        {user.using2FA 
-                          ? "Your account has maximum security protection." 
+                        {user.using2FA
+                          ? "Your account has maximum security protection."
                           : "Enable 2FA to increase your security score."}
                       </p>
                     </div>
@@ -460,7 +452,7 @@ export default function Profile() {
                         </div>
                         <span className="badge bg-success">Verified</span>
                       </div>
-                      
+
                       <div className="list-group-item border-0 px-0 d-flex justify-content-between align-items-center">
                         <div>
                           <h6 className="mb-0">Two-Factor Authentication</h6>
@@ -470,7 +462,7 @@ export default function Profile() {
                           {user.using2FA ? "Enabled" : "Disabled"}
                         </span>
                       </div>
-                      
+
                       <div className="list-group-item border-0 px-0 d-flex justify-content-between align-items-center">
                         <div>
                           <h6 className="mb-0">Password Strength</h6>
@@ -486,26 +478,43 @@ export default function Profile() {
           )}
         </div>
       </div>
-      
+
       {/* Footer */}
-      <footer className="bg-white border-top py-3 mt-auto">
-        <div className="container px-4">
+      <footer className="bg-white border-top py-3 mt-auto w-100">
+        <div className="container-fluid px-4 w-100">
           <div className="row align-items-center">
             <div className="col-md-6 text-center text-md-start">
-              <p className="mb-0 text-muted small">© 2023 UserManagement. All rights reserved.</p>
+              <p className="mb-0 text-muted small">© 2023 StudyPlatform. All rights reserved.</p>
             </div>
             <div className="col-md-6 text-center text-md-end">
               <ul className="list-inline mb-0">
-                <li className="list-inline-item"><a href="#" className="text-muted small">Privacy Policy</a></li>
-                <li className="list-inline-item"><span className="text-muted">•</span></li>
-                <li className="list-inline-item"><a href="#" className="text-muted small">Terms of Service</a></li>
-                <li className="list-inline-item"><span className="text-muted">•</span></li>
-                <li className="list-inline-item"><a href="#" className="text-muted small">Contact Support</a></li>
+                <li className="list-inline-item">
+                  <a href="#" className="text-muted small">
+                    Privacy Policy
+                  </a>
+                </li>
+                <li className="list-inline-item">
+                  <span className="text-muted">•</span>
+                </li>
+                <li className="list-inline-item">
+                  <a href="#" className="text-muted small">
+                    Terms of Service
+                  </a>
+                </li>
+                <li className="list-inline-item">
+                  <span className="text-muted">•</span>
+                </li>
+                <li className="list-inline-item">
+                  <a href="#" className="text-muted small">
+                    Contact Support
+                  </a>
+                </li>
               </ul>
             </div>
           </div>
         </div>
       </footer>
     </div>
-  );
+  )
 }
+

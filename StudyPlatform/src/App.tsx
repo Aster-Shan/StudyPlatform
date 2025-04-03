@@ -1,10 +1,11 @@
 "use client"
 
-import "bootstrap/dist/css/bootstrap.min.css"
-import React, { useEffect } from "react"
+import { useEffect } from "react"
 import { Route, BrowserRouter as Router, Routes } from "react-router-dom"
+import "./App.css"
 import ProtectedRoute from "./components/ProtectedRoute"
 import { AuthProvider } from "./contexts/AuthContext"
+import "./index.css"
 import Chat from "./pages/Chat"
 import DocumentDetail from "./pages/DocumentDetail"
 import Documents from "./pages/Documents"
@@ -19,12 +20,17 @@ import Register from "./pages/Register"
 import ResetPassword from "./pages/ResetPassword"
 import Setup2FA from "./pages/Setup2FA"
 import VideoConferencing from "./pages/VideoConferencing"
+import AITools from "./pages/ai-tools"; // Import the new AI Tools page
+
+// Import bootstrap JS only (CSS will be imported in a separate file)
+import "bootstrap/dist/css/bootstrap.css"
+import React from "react"
 
 function App() {
   useEffect(() => {
     // Initialize Bootstrap JavaScript
     if (typeof window !== "undefined" && typeof document !== "undefined") {
-      import("bootstrap")
+      import("bootstrap/dist/js/bootstrap.bundle.min.js")
     }
   }, [])
 
@@ -108,6 +114,15 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <VideoConferencing />
+                  </ProtectedRoute>
+                }
+              />
+              {/* Add the new AI Tools route */}
+              <Route
+                path="/ai-tools"
+                element={
+                  <ProtectedRoute>
+                    <AITools />
                   </ProtectedRoute>
                 }
               />

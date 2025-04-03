@@ -5,6 +5,7 @@ import React, { useEffect, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import DocumentUpload from "../components/DocumentUpload"
 import DocumentsList from "../components/DocumentsList"
+import ProfileImage from "../components/ProfileImage"
 import { useAuth } from "../contexts/AuthContext"
 import api from "../services/api"
 import { getPublicDocuments, searchDocuments } from "../services/documentService"
@@ -114,13 +115,13 @@ export default function Documents() {
   }
 
   return (
-    <div className="min-vh-100 bg-light d-flex flex-column">
+    <div className="min-vh-100 bg-light d-flex flex-column w-100">
       {/* Custom Navbar */}
-      <header className="navbar navbar-light bg-white border-bottom">
-        <div className="container ms-2">
+      <header className="navbar navbar-light bg-white border-bottom shadow-sm sticky-top w-100">
+        <div className="container-fluid px-4 w-100">
           {/* Brand */}
-          <Link to="/" className="navbar-brand fw-bold">
-            UserManagement
+          <Link to="/" className="navbar-brand fw-bold me-auto me-lg-4">
+            StudyPlatform
           </Link>
 
           {/* Nav links */}
@@ -152,26 +153,15 @@ export default function Documents() {
           {user ? (
             <div className="d-flex align-items-center">
               <div className="d-flex align-items-center me-3">
-                <div
-                  className="d-flex align-items-center justify-content-center bg-light rounded-circle me-2"
-                  style={{ width: "32px", height: "32px" }}
-                >
-                  {user.profilePictureUrl ? (
-                    <img
-                      src={user.profilePictureUrl || "/placeholder.svg"}
-                      alt={user.firstName}
-                      className="rounded-circle w-100 h-100 object-fit-cover"
-                    />
-                  ) : (
-                    <span className="fw-medium text-secondary">
-                      {user.firstName?.charAt(0)}
-                      {user.lastName?.charAt(0)}
-                    </span>
-                  )}
-                </div>
+                <ProfileImage
+                  src={user.profilePictureUrl}
+                  alt={`${user.firstName} ${user.lastName}`}
+                  size={32}
+                  className="me-2"
+                />
                 <span className="d-none d-md-inline">{user.firstName}</span>
               </div>
-              <button className="btn btn-danger btn-sm d-flex align-items-center" onClick={handleLogout}>
+              <button className="btn btn-outline-danger btn-sm d-flex align-items-center" onClick={handleLogout}>
                 <LogOut size={16} className="me-2" />
                 <span className="d-none d-md-inline">Logout</span>
               </button>
@@ -189,7 +179,7 @@ export default function Documents() {
         </div>
       </header>
 
-      <div className="flex-grow-1">
+      <div className="flex-grow-1 w-100">
         {/* Header with Gradient */}
         <div
           className="w-100 text-white py-4"
@@ -198,7 +188,7 @@ export default function Documents() {
             borderBottom: "1px solid rgba(255,255,255,0.1)",
           }}
         >
-          <div className="container px-4">
+          <div className="container-fluid px-4 w-100">
             <div className="row align-items-center">
               <div className="col-lg-8">
                 <h1 className="display-5 fw-bold mb-1">Documents</h1>
@@ -218,7 +208,7 @@ export default function Documents() {
           </div>
         </div>
 
-        <div className="container px-4 py-4">
+        <div className="container-fluid px-4 py-4 w-100">
           {/* Search Section */}
           <div className="row mb-4">
             <div className="col-12">
@@ -436,11 +426,11 @@ export default function Documents() {
       </div>
 
       {/* Footer */}
-      <footer className="bg-white border-top py-3 mt-auto">
-        <div className="container px-4">
+      <footer className="bg-white border-top py-3 mt-auto w-100">
+        <div className="container-fluid px-4 w-100">
           <div className="row align-items-center">
             <div className="col-md-6 text-center text-md-start">
-              <p className="mb-0 text-muted small">© 2023 UserManagement. All rights reserved.</p>
+              <p className="mb-0 text-muted small">© 2023 StudyPlatform. All rights reserved.</p>
             </div>
             <div className="col-md-6 text-center text-md-end">
               <ul className="list-inline mb-0">

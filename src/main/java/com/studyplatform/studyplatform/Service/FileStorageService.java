@@ -1,6 +1,7 @@
 package com.studyplatform.studyplatform.Service;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -8,6 +9,8 @@ import java.nio.file.StandardCopyOption;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -61,4 +64,25 @@ public class FileStorageService {
     public Path getFilePath(String fileName) {
         return Paths.get(uploadDir).toAbsolutePath().normalize().resolve(fileName);
     }
+    
+    /**
+     * Load a file as a Resource
+     * @param fileName the name of the file to load
+     * @return the file as a Resource
+     */
+    public Resource loadFileAsResource(String fileName) {
+        try {
+            Path filePath = getFilePath(fileName);
+            Resource resource = new UrlResource(filePath.toUri());
+            
+            if (resource.exists()) {
+                return resource;
+            } else {
+                throw new RuntimeException("File not found: " + fileName);
+            }
+        } catch (MalformedURLException ex) {
+            throw new RuntimeException("File not found: " + fileName, ex);
+        }
+    }
 }
+

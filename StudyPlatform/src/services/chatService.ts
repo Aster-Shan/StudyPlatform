@@ -1,6 +1,6 @@
 import api from "../services/api"; // Import the API service
-import type { User } from "../types"
-import { handleApiError } from "../util/errorHandling"
+import type { User } from "../types";
+import { handleApiError } from "../util/errorHandling";
 
 // Types for chat-specific entities
 export interface ChatRoom {
@@ -305,7 +305,8 @@ export const sendChatMessage = async (
 export const createChatRoom = async (
   name: string,
   participantIds: string[],
-  currentUser: User | null,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _currentUser: User | null,
 ): Promise<ChatRoom> => {
   try {
     return new Promise((resolve) => {
@@ -440,6 +441,7 @@ export const getAllUsers = async (): Promise<User[]> => {
           break
         }
       } catch (err) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         error = err
         console.log(`Endpoint ${endpoint} failed:`, err)
       }

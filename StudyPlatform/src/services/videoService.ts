@@ -1,11 +1,11 @@
-import api from "./api"
+import api from "./api";
 
 export const createVideoRoom = async (name: string): Promise<{ roomId: string; name: string }> => {
   const response = await api.post("/api/video/rooms", { name })
   return response.data
 }
 
-export const getRoomInfo = async (roomId: string): Promise<any> => {
+export const getRoomInfo = async (roomId: string): Promise<unknown> => {
   const response = await api.get(`/api/video/rooms/${roomId}`)
   return response.data
 }
