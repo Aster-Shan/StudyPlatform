@@ -61,15 +61,6 @@ public class FileStorageService {
         }
     }
     
-    public Path getFilePath(String fileName) {
-        return Paths.get(uploadDir).toAbsolutePath().normalize().resolve(fileName);
-    }
-    
-    /**
-     * Load a file as a Resource
-     * @param fileName the name of the file to load
-     * @return the file as a Resource
-     */
     public Resource loadFileAsResource(String fileName) {
         try {
             Path filePath = getFilePath(fileName);
@@ -84,5 +75,22 @@ public class FileStorageService {
             throw new RuntimeException("File not found: " + fileName, ex);
         }
     }
+    
+    /**
+     * Get the full file path for a stored file
+     * @param fileName The name of the file
+     * @return The full path to the file as a Path object
+     */
+    public Path getFilePath(String fileName) {
+        return Paths.get(uploadDir).toAbsolutePath().normalize().resolve(fileName);
+    }
+    
+    /**
+     * Get the full file path for a stored file as a string
+     * @param fileName The name of the file
+     * @return The full path to the file as a String
+     */
+    public String getFilePathAsString(String fileName) {
+        return getFilePath(fileName).toString();
+    }
 }
-

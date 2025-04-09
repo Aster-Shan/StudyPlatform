@@ -28,10 +28,7 @@ import React from "react"
 
 function App() {
   useEffect(() => {
-    // Initialize Bootstrap JavaScript
-    if (typeof window !== "undefined" && typeof document !== "undefined") {
-      import("bootstrap/dist/js/bootstrap.bundle.min.js")
-    }
+   
   }, [])
 
   return (

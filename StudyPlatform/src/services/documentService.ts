@@ -67,3 +67,48 @@ export const getDownloadUrl = (id: number) => {
   return `${api.defaults.baseURL}/api/documents/${id}/download`
 }
 
+export async function getDocumentSummary(documentId: number) {
+  const response = await fetch(`/api/documents/${documentId}/summary`)
+
+  // Check if response is JSON
+  const contentType = response.headers.get("content-type")
+  if (!contentType || !contentType.includes("application/json")) {
+    throw new Error("API returned non-JSON response. The summary API endpoint may not be implemented yet.")
+  }
+
+  if (!response.ok) {
+    const errorData = await response.json()
+    throw new Error(errorData.error || `Failed to fetch document summary: ${response.status}`)
+  }
+
+  return await response.json()
+}
+
+/**
+ * Save a custom summary for a document
+ * @param documentId The ID of the document
+ * @param summaryText The custom summary text
+ * @returns The updated document
+ */
+export async function saveDocumentSummary(documentId: number, summaryText: string) {
+  const response = await fetch(`/api/documents/${documentId}/summary`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ summary: summaryText }),
+  })
+
+  // Check if response is JSON
+  const contentType = response.headers.get("content-type")
+  if (!contentType || !contentType.includes("application/json")) {
+    throw new Error("API returned non-JSON response. The summary API endpoint may not be implemented correctly.")
+  }
+
+  if (!response.ok) {
+    const errorData = await response.json()
+    throw new Error(errorData.error || `Failed to save summary: ${response.status}`)
+  }
+
+  return await response.json()
+}

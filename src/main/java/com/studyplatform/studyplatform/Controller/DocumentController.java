@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -40,6 +42,18 @@ public class DocumentController {
   @GetMapping("/test")
   public ResponseEntity<String> testEndpoint() {
       return ResponseEntity.ok("DocumentController is working!");
+  }
+
+  @GetMapping(value = "/test-json", produces = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<Map<String, Object>> testJsonEndpoint() {
+      System.out.println("=== Test JSON endpoint called ===");
+      Map<String, Object> response = new HashMap<>();
+      response.put("message", "This is a test JSON response");
+      response.put("timestamp", System.currentTimeMillis());
+      return ResponseEntity
+          .ok()
+          .contentType(MediaType.APPLICATION_JSON)
+          .body(response);
   }
   
   @GetMapping
@@ -245,5 +259,64 @@ public class DocumentController {
           return ResponseEntity.badRequest().body(e.getMessage());
       }
   }
+  
+  /**
+   * Get an auto-generated summary for a document
+   */
+  @GetMapping(value = "/{id}/summary", produces = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<?> getDocumentSummary(@PathVariable Long id) {
+      System.out.println("=== Document summary endpoint called for ID: " + id + " ===");
+      try {
+          // For development, skip authentication check
+          Document document = documentService.getDocumentById(id);
+          System.out.println("Document found: " + document.getName());
+      
+          Map<String, Object> summary = documentService.getDocumentSummary(id);
+          System.out.println("Summary generated: " + summary);
+          return ResponseEntity
+              .ok()
+              .contentType(MediaType.APPLICATION_JSON)
+              .body(summary);
+      } catch (Exception e) {
+          System.out.println("Error in summary endpoint: " + e.getMessage());
+          e.printStackTrace();
+          return ResponseEntity
+              .badRequest()
+              .contentType(MediaType.APPLICATION_JSON)
+              .body(Map.of("error", e.getMessage()));
+      }
+  }
+  
+  /**
+   * Attach a custom summary to a document
+   */
+  @PostMapping(value = "/{id}/summary", produces = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<?> attachDocumentSummary(
+        @PathVariable Long id,
+        @RequestBody Map<String, String> payload) {
+    try {
+        // For development, skip authentication check
+        Document document = documentService.getDocumentById(id);
+        
+        String summaryText = payload.get("summary");
+        if (summaryText == null || summaryText.trim().isEmpty()) {
+            return ResponseEntity
+                .badRequest()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Map.of("error", "Summary text cannot be empty"));
+        }
+        
+        Document updatedDocument = documentService.attachSummary(id, summaryText);
+        
+        return ResponseEntity
+            .ok()
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(updatedDocument);
+    } catch (Exception e) {
+        return ResponseEntity
+            .badRequest()
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(Map.of("error", e.getMessage()));
+    }
 }
-
+}

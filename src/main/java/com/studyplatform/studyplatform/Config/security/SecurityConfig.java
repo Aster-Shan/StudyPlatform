@@ -29,9 +29,6 @@ public class SecurityConfig {
   
   @Autowired
   private JwtAuthenticationFilter jwtAuthenticationFilter;
-  
-  @Autowired
-  private OAuth2SuccessHandler oAuth2SuccessHandler;
 
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -43,18 +40,16 @@ public class SecurityConfig {
           .authorizeHttpRequests(authorize -> authorize
               .antMatchers(
                   "/api/auth/**", 
-                  "/api/users/reset-password", // Explicitly permit this endpoint
-                  "/oauth2/**",
-                  "/login/oauth2/code/*",
-                  "/api/files/**" // Allow anonymous access to files
+                  "/api/users/reset-password",
+                  "/api/files/**",
+                  "/api/documents/test",
+                  "/api/documents/test-json",
+                  "/api/documents/*/summary"  // Allow summary endpoints without authentication for development
               ).permitAll()
-              .antMatchers("/api/documents/**").authenticated() // Documents endpoints
+              .antMatchers("/api/documents/**").authenticated() // Other document endpoints
               .antMatchers("/api/comments/**").authenticated() // Comments endpoints
               .anyRequest().authenticated()
           )
-          .oauth2Login()
-              .successHandler(oAuth2SuccessHandler)
-          .and()
           .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
           
       return http.build();
@@ -75,7 +70,7 @@ public class SecurityConfig {
       CorsConfiguration configuration = new CorsConfiguration();
       configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000"));
       configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-      configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With"));
+      configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept"));
       configuration.setAllowCredentials(true);
       
       UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
@@ -83,4 +78,3 @@ public class SecurityConfig {
       return source;
   }
 }
-
