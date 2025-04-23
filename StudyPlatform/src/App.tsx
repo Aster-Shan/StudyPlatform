@@ -25,6 +25,7 @@ import AITools from "./pages/ai-tools"; // Import the new AI Tools page
 // Import bootstrap JS only (CSS will be imported in a separate file)
 import "bootstrap/dist/css/bootstrap.css"
 import React from "react"
+import VerificationPending from "./pages/verification-pending"
 
 function App() {
   useEffect(() => {
@@ -40,6 +41,7 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/verification-pending" element={<VerificationPending />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route
                 path="/"

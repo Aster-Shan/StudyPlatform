@@ -5,6 +5,12 @@ import React, { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { useAuth } from "../contexts/AuthContext"
 
+// Define the response type
+interface RegisterResponse {
+  message?: string
+  email?: string
+}
+
 export default function Register() {
   const [formData, setFormData] = useState({
     firstName: "",
@@ -43,13 +49,21 @@ export default function Register() {
     setLoading(true)
 
     try {
-      await register({
+      // Cast the response to the RegisterResponse type
+      const response = (await register({
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,
         password: formData.password,
+      })) as RegisterResponse
+
+      // Navigate to verification pending page instead of home
+      navigate("/verification-pending", {
+        state: {
+          email: formData.email,
+          message: response.message || "Registration successful! Please check your email to verify your account.",
+        },
       })
-      navigate("/")
     } catch (err: unknown) {
       console.error("Registration error:", err)
       setError(err instanceof Error ? err.message : "Registration failed. Please try again.")
@@ -203,4 +217,3 @@ export default function Register() {
     </div>
   )
 }
-

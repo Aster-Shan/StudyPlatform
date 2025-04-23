@@ -1,17 +1,15 @@
 "use client"
 
 import axios from "axios"
-import * as React from 'react'
-import { createContext, type ReactNode, useContext, useEffect, useState } from "react"
+import React, { createContext, type ReactNode, useContext, useEffect, useState } from "react"
 import api from "../services/api"
-import type { User } from "../types"
-
+import type { LoginResponse, RegisterResponse, User } from "../types"
 interface AuthContextType {
   user: User | null
   token: string | null
   loading: boolean
-  login: (email: string, password: string) => Promise<unknown>
-  register: (userData: object) => Promise<void>
+  login: (email: string, password: string) => Promise<LoginResponse>
+  register: (userData: object) => Promise<RegisterResponse>
   logout: () => void
   updateUser: (userData: Partial<User>) => void
 }
@@ -52,9 +50,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     fetchUser()
   }, [token])
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<LoginResponse> => {
     try {
-      const response = await axios.post("http://localhost:8080/api/auth/login", {
+      const response = await axios.post<LoginResponse>("http://localhost:8080/api/auth/login", {
         email,
         password,
       })
@@ -67,9 +65,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         }
       }
 
-      localStorage.setItem("token", response.data.token)
-      setToken(response.data.token)
-      setUser(response.data.user)
+      localStorage.setItem("token", response.data.token || "")
+      setToken(response.data.token || null)
+      setUser(response.data.user || null)
       return response.data
     } catch (error: unknown) {
       console.error("Login error details:", error)
@@ -84,6 +82,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         // Handle specific status codes
         if (error.response.status === 401) {
           throw new Error("Invalid email or password. Please try again.")
+        }
+
+        // Check for unverified email error
+        if (error.response.status === 403 && error.response.data.error === "Email not verified") {
+          throw new Error(error.response.data.message || "Please verify your email before logging in.")
         }
 
         // Throw a more specific error with the server's message
@@ -102,15 +105,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   }
 
-  const register = async (userData: object) => {
+  const register = async (userData: object): Promise<RegisterResponse> => {
     try {
       console.log("Sending registration data:", userData)
 
-      const response = await api.post("/api/auth/register", userData)
+      const response = await api.post<RegisterResponse>("/api/auth/register", userData)
 
-      localStorage.setItem("token", response.data.token)
-      setToken(response.data.token)
-      setUser(response.data.user)
+      // Don't set token or user here - just return the response
+      return response.data
     } catch (error: unknown) {
       console.error("Registration error details:", error)
 
@@ -138,6 +140,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
     }
   }
+
   const logout = () => {
     localStorage.removeItem("token")
     setToken(null)
@@ -154,4 +157,3 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     </AuthContext.Provider>
   )
 }
-

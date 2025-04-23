@@ -3,6 +3,8 @@ package com.studyplatform.studyplatform.Controller;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +30,7 @@ import com.studyplatform.studyplatform.dto.Verify2FARequest;
 @RequestMapping("/api/auth")
 public class AuthController {
 
+      private static final Logger logger = LoggerFactory.getLogger(UserService.class);
     @Autowired
     private AuthenticationManager authenticationManager;
     
@@ -41,14 +44,15 @@ public class AuthController {
     public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
         try {
             User user = userService.registerUser(request);
-            String token = jwtTokenProvider.generateToken(user.getEmail());
             
+            // Don't generate a token yet since the user needs to verify their email
             Map<String, Object> response = new HashMap<>();
-            response.put("token", token);
-            response.put("user", user);
+            response.put("message", "Registration successful! Please check your email to verify your account.");
+            response.put("email", user.getEmail());
             
             return ResponseEntity.ok(response);
         } catch (Exception e) {
+            logger.error("Registration error: {}", e.getMessage());
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
@@ -110,6 +114,25 @@ public class AuthController {
             return ResponseEntity.badRequest().body(Map.of("message", "Error: " + e.getMessage()));
         }
     }
+    @PostMapping("/resend-verification")
+public ResponseEntity<?> resendVerification(@RequestBody Map<String, String> request) {
+    String email = request.get("email");
+    if (email == null || email.isEmpty()) {
+        return ResponseEntity.badRequest().body(Map.of("message", "Email is required"));
+    }
+    
+    try {
+        boolean sent = userService.resendVerificationEmail(email);
+        if (sent) {
+            return ResponseEntity.ok(Map.of("message", "Verification email has been resent"));
+        } else {
+            return ResponseEntity.badRequest().body(Map.of("message", "Failed to resend verification email"));
+        }
+    } catch (Exception e) {
+        return ResponseEntity.badRequest().body(Map.of("message", "Error: " + e.getMessage()));
+    }
+}
+
 
     @PostMapping("/verify-2fa")
     public ResponseEntity<?> verify2FA(@RequestBody Verify2FARequest request) {

@@ -5,11 +5,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.google.api.client.util.Value;
 import com.studyplatform.studyplatform.Model.PasswordResetToken;
 import com.studyplatform.studyplatform.Model.User;
 import com.studyplatform.studyplatform.Model.VerificationToken;
@@ -24,6 +27,9 @@ import dev.samstevens.totp.code.CodeVerifier;
 @Service
 
 public class UserService {
+    @Value("${app.frontend-url}")
+    private String frontendUrl;
+    private static final Logger logger = LoggerFactory.getLogger(UserService.class);
     @Autowired
     private UserRepository userRepository;
 
@@ -54,17 +60,26 @@ private IEmailService emailService;
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
         user.setProvide(User.AuthProvider.LOCAL);
-        
-        // Change back to false to require email verification
-        user.setEnabled(false);
+        user.setEnabled(false); // User starts as disabled until email verification
         
         User savedUser = userRepository.save(user);
         
-        // Uncomment this code to send verification emails
-        String token = UUID.randomUUID().toString();
-        createVerificationToken(savedUser, token);
-        String confirmationUrl = "http://localhost:3000/confirm?token=" + token;
-        emailService.sendVerificationEmail(savedUser.getEmail(), confirmationUrl);
+        try {
+            String token = UUID.randomUUID().toString();
+            createVerificationToken(savedUser, token);
+            String confirmationUrl = "http://localhost:3000/confirm?token=" + token;
+            emailService.sendVerificationEmail(savedUser.getEmail(), confirmationUrl);
+        } catch (Exception e) {
+            // Log the error but don't fail the registration
+            logger.error("Failed to send verification email: {}", e.getMessage());
+            // Optionally, you could delete the user and throw an exception
+            // userRepository.delete(savedUser);
+            // throw new RuntimeException("Failed to send verification email. Please try again later.", e);
+            
+            // Or, for development, you could auto-enable the user
+            user.setEnabled(true);
+            userRepository.save(user);
+        }
         
         return savedUser;
     }
@@ -181,4 +196,33 @@ private IEmailService emailService;
             return userRepository.findById(id)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with id: " + id));
         }
+        public boolean resendVerificationEmail(String email) {
+            User user = getUserByEmail(email);
+            
+            if (user == null) {
+                throw new RuntimeException("User not found");
+            }
+            
+            if (user.isEnabled()) {
+                throw new RuntimeException("User is already verified");
+            }
+            
+            // Delete existing verification tokens for this user
+            verificationTokenRepository.deleteByUser(user);
+            
+            // Create a new verification token
+            String token = UUID.randomUUID().toString();
+            VerificationToken verificationToken = new VerificationToken();
+            verificationToken.setToken(token);
+            verificationToken.setUser(user);
+            verificationToken.setExpiryDate(LocalDateTime.now().plusDays(1));
+            verificationTokenRepository.save(verificationToken);
+            
+            // Send verification email
+            String confirmationUrl = frontendUrl + "/confirm?token=" + token;
+            emailService.sendVerificationEmail(user.getEmail(), confirmationUrl);
+            
+            return true;
+        }
+        
 }

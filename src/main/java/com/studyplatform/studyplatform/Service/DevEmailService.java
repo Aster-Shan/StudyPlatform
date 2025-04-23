@@ -22,4 +22,17 @@ public class DevEmailService implements IEmailService {
         logger.info("MOCK EMAIL: Verification email for: {}", to);
         logger.info("MOCK EMAIL: Confirmation URL: {}", confirmationUrl);
     }
+
+    @Override
+    public void sendWelcomeEmail(String to, String firstName) {
+        logger.info("MOCK EMAIL: Welcome email for: {}", to);
+        logger.info("MOCK EMAIL: First name: {}", firstName);
+    }
+
+    @Override
+    public void sendLoginNotificationEmail(String to, String ipAddress, String deviceInfo) {
+        logger.info("MOCK EMAIL: Login notification for: {}", to);
+        logger.info("MOCK EMAIL: IP Address: {}", ipAddress);
+        logger.info("MOCK EMAIL: Device Info: {}", deviceInfo);
+    }
 }

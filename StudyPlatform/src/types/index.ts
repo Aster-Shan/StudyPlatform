@@ -99,3 +99,17 @@ export interface SendMessageRequest {
   content: string
 }
 
+export interface LoginResponse {
+  token?: string
+  user?: User
+  requires2FA?: boolean
+  tempToken?: string
+  error?: string
+  message?: string
+  email?: string
+}export interface RegisterResponse {
+  message?: string
+  email?: string
+  token?: string
+  user?: User
+}
